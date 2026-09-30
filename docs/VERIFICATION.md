@@ -7,7 +7,7 @@ All media produced during live checks was held in temporary directories and remo
 
 | Check                     | Result                                                    |
 | ------------------------- | --------------------------------------------------------- |
-| Python backend suite      | 49 passed; 1 symlink test skipped for Windows privilege   |
+| Python backend suite      | 52 passed; 1 symlink test skipped for Windows privilege   |
 | Real synthetic conversion | MP4 and MP3 through yt-dlp/FFmpeg passed; codecs probed   |
 | Browser suite             | 8 passed, desktop and mobile                              |
 | Accessibility             | No serious/critical axe findings in the tested initial UI |
@@ -41,8 +41,11 @@ check above used an available source; availability of arbitrary videos is not gu
 
 ## CI and hosting
 
-CI runs the full suite on Linux, including the symlink test, dependency audits, browser tests,
-and a real Docker build/start/readiness smoke. CodeQL analyzes Python and JavaScript separately.
+The initial bootstrap commit `d937115` passed [CI run 36750311046](https://github.com/KasheK420/yt-downloader/actions/runs/36750311046):
+the full Linux suite including symlink verification, dependency audits, browser tests,
+and a real Docker build/start/readiness smoke. Both languages passed
+[CodeQL run 36750311047](https://github.com/KasheK420/yt-downloader/actions/runs/36750311047).
+Three additional worker-policy regression cases cover excessive/missing duration and live media.
 Consult [the latest workflow runs](https://github.com/KasheK420/yt-downloader/actions) for the
 actual commit's results. A workflow definition alone is not evidence of a passing run.
 

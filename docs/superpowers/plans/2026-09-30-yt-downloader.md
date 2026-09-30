@@ -27,9 +27,9 @@ Source changes and verification results belong in the handoff documentation.
 Files: pyproject.toml, uv.lock, app/config.py, app/urls.py, tests/test_urls.py.
 Interface: `normalize_url(value: str) -> str`; `Settings` supplies validated limits.
 
-- [ ] Write URL acceptance/rejection tests, run and observe failure.
-- [ ] Implement canonicalization and validated environment settings.
-- [ ] Run focused tests, lock dependencies, commit the input boundary.
+- [x] Write URL acceptance/rejection tests, run and observe failure.
+- [x] Implement canonicalization and validated environment settings.
+- [x] Run focused tests, lock dependencies, commit the input boundary.
 
 ## Task 2: Owned persistent jobs and HTTP contract
 
@@ -37,9 +37,9 @@ Files: app/store.py, app/main.py, tests/test_api.py, tests/test_store.py.
 Interfaces: `Store.create(owner, client_key, url, kind, quality) -> dict`,
 `Store.get(job_id, owner) -> dict | None`, `create_app(settings) -> FastAPI`.
 
-- [ ] Write failing API/store tests for CSRF, isolation, rate limits, and expiry.
-- [ ] Implement SQLite transactions and safe owned-file serving.
-- [ ] Verify quota concurrency and restart behavior with real temporary databases.
+- [x] Write failing API/store tests for CSRF, isolation, rate limits, and expiry.
+- [x] Implement SQLite transactions and safe owned-file serving.
+- [x] Verify quota concurrency and restart behavior with real temporary databases.
 
 ## Task 3: Worker, cleanup, and bounded conversion
 
@@ -47,27 +47,27 @@ Files: app/runner.py, app/worker.py, tests/test_runner.py, tests/test_media.py.
 Interfaces: `Runner.start()`, `Runner.stop()`, `Runner.cancel(job_id)`;
 child process emits JSON metadata/progress/result events on stdout.
 
-- [ ] Write process-lifecycle and directory-limit tests before implementation.
-- [ ] Implement killable yt-dlp process, conversion, bounded logs, quotas, and cleanup.
-- [ ] Verify with local process fixtures and synthetic FFmpeg media.
-- [ ] Run an optional live provider smoke and record actual result separately.
+- [x] Write process-lifecycle and directory-limit tests before implementation.
+- [x] Implement killable yt-dlp process, conversion, bounded logs, quotas, and cleanup.
+- [x] Verify with local process fixtures and synthetic FFmpeg media.
+- [x] Run an optional live provider smoke and record actual result separately.
 
 ## Task 4: Responsive browser workflow
 
 Files: app/static/index.html, app/static/app.js, app/static/styles.css,
 tests/browser.spec.mjs, package.json, playwright.config.mjs.
 
-- [ ] Define browser tests for submit, failure, cancellation, language, and mobile layout.
-- [ ] Implement accessible form, status polling, progress, expiry, and downloads.
-- [ ] Run browser tests and inspect desktop/mobile screenshots.
+- [x] Define browser tests for submit, failure, cancellation, language, and mobile layout.
+- [x] Implement accessible form, status polling, progress, expiry, and downloads.
+- [x] Run browser tests and inspect desktop/mobile screenshots.
 
 ## Task 5: Operations, docs, and GitHub
 
 Files: Dockerfile, compose.yaml, .env.example, .github/, README.md, docs/,
 LICENSE, SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, CHANGELOG.md.
 
-- [ ] Document configuration, API, deployment, architecture, maintenance, and evidence.
-- [ ] Add lint/types/test/audit/build CI and a manually triggered release workflow.
-- [ ] Run complete checks and audit staged content for secrets/artifacts.
-- [ ] Create public repository, push, configure metadata/security/main protection,
+- [x] Document configuration, API, deployment, architecture, maintenance, and evidence.
+- [x] Add lint/types/test/audit/build CI and a manually triggered release workflow.
+- [x] Run complete checks and audit staged content for secrets/artifacts.
+- [x] Create public repository, push, configure metadata/security/main protection,
       labels and public-launch milestone/issues, and verify remote state and CI.

@@ -112,6 +112,7 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |
 | [Roadmap](docs/ROADMAP.md)             | Public-launch acceptance and future work               |
 | [Handoff](docs/HANDOFF.md)             | Current state and how to continue                      |
+| [GitHub setup](docs/GITHUB.md)         | Repository protections, security features, and issues  |
 | [Contributing](CONTRIBUTING.md)        | Development and review conventions                     |
 | [Security](SECURITY.md)                | Security boundaries and private reporting              |
 

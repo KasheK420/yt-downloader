@@ -133,3 +133,50 @@ def test_worker_converts_real_synthetic_media(
     if kind == "mp3":
         assert all(stream["codec_type"] == "audio" for stream in streams)
     assert '"event": "complete"' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "metadata,expected",
+    [
+        ({"duration": 7201}, "duration_limit"),
+        ({"duration": None}, "duration_limit"),
+        ({"duration": 30, "is_live": True}, "live_unsupported"),
+    ],
+)
+def test_worker_rejects_ineligible_media_before_download(
+    tmp_path, monkeypatch, capsys, metadata, expected
+):
+    original = yt_dlp.YoutubeDL
+
+    class IneligibleIE(InfoExtractor):
+        _VALID_URL = r"fixture:(?P<id>video)"
+
+        def _real_extract(self, url):
+            return {
+                "id": "video",
+                "title": "Rejected fixture",
+                "url": "http://127.0.0.1:1/must-not-be-fetched.mp4",
+                "ext": "mp4",
+                "height": 90,
+                **metadata,
+            }
+
+    def fixture_downloader(options):
+        downloader = original(options, auto_init=False)
+        downloader.add_info_extractor(IneligibleIE())
+        return downloader
+
+    monkeypatch.setattr(yt_dlp, "YoutubeDL", fixture_downloader)
+    monkeypatch.chdir(tmp_path)
+    args = argparse.Namespace(
+        url="fixture:video",
+        kind="mp4",
+        quality=720,
+        max_duration=7200,
+        max_file_bytes=1024 * 1024,
+        js_runtime="node",
+        ffmpeg_location=None,
+    )
+    assert download(args) == 1
+    assert f'"code": "{expected}"' in capsys.readouterr().out
+    assert not list(tmp_path.iterdir())
