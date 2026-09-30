@@ -172,7 +172,7 @@ def test_ffmpeg_error_is_not_hidden_by_zero_exit_status(tmp_path, media_tools, m
 
     def legacy_error(command, **kwargs):
         result = real_run(command, **kwargs)
-        if command[0] == media_tools[0] and (command[-1] == "-") == (stage == "decode"):
+        if Path(command[0]).stem == "ffmpeg" and (command[-1] == "-") == (stage == "decode"):
             # FFmpeg 6.1 in Linux CI reports this error despite returning zero.
             # Keep real conversion and probing, replay only that observed process contract.
             return subprocess.CompletedProcess(
