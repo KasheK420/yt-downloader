@@ -55,7 +55,8 @@ MP4 normalization also enforces H.264/yuv420p and AAC-LC audio when present, reg
 resolution. Compatible streams are remuxed without re-encoding; other streams are converted.
 The MP4 index is moved before media data (faststart). A full strict FFmpeg decode verifies the
 temporary output before it atomically replaces the downloaded file. Decode/conversion failures
-become `processing_error` and cannot publish a completed job. All work remains inside the
+include error-level stderr even when an older FFmpeg returns status zero. They become
+`processing_error` and cannot publish a completed job. All work remains inside the
 worker's existing deadline and storage limits.
 
 Failure is published after process termination; cleanup failures cannot leave the job active.

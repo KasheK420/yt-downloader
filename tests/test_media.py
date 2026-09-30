@@ -133,8 +133,8 @@ def test_mp4_with_readable_metadata_but_broken_frames_is_rejected(tmp_path, medi
     packet = video_packets(path, media_tools)[-1]
     data = bytearray(path.read_bytes())
     start, size = int(packet["pos"]), int(packet["size"])
-    # Preserve length and NAL type. Zeroing the NAL header creates unspecified type 0,
-    # which older decoders can ignore instead of treating it as a damaged video slice.
+    # Preserve length/type so this damages a video slice instead of replacing it
+    # with an unspecified type-0 unit.
     data[start + 5 : start + size] = b"\0" * (size - 5)
     path.write_bytes(data)
     assert inspect_media(path, 10, media_tools[2])["format"]["duration"]
@@ -155,10 +155,38 @@ def test_mp4_with_readable_metadata_but_broken_frames_is_rejected(tmp_path, medi
         capture_output=True,
         timeout=30,
     )
-    assert decoded.returncode != 0, "The fixture must contain an undecodable video slice"
+    assert decoded.returncode != 0 or decoded.stderr.strip(), (
+        "The fixture must contain an undecodable video slice"
+    )
     with pytest.raises(SourceError, match="processing_error"):
         fit_video(path, 720, 10, media_tools[2])
     assert path.read_bytes() == data
+
+
+@pytest.mark.parametrize("stage", ["remux", "decode"])
+def test_ffmpeg_error_is_not_hidden_by_zero_exit_status(tmp_path, media_tools, monkeypatch, stage):
+    path = tmp_path / "media.mp4"
+    generate_video(path, media_tools)
+    original = path.read_bytes()
+    real_run = subprocess.run
+
+    def legacy_error(command, **kwargs):
+        result = real_run(command, **kwargs)
+        if command[0] == media_tools[0] and (command[-1] == "-") == (stage == "decode"):
+            # FFmpeg 6.1 in Linux CI reports this error despite returning zero.
+            # Keep real conversion and probing, replay only that observed process contract.
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                result.stdout,
+                b"Decoder thread returned error: Invalid data found when processing input\n",
+            )
+        return result
+
+    monkeypatch.setattr("app.media.subprocess.run", legacy_error)
+    with pytest.raises(SourceError, match="processing_error"):
+        fit_video(path, 720, 10, media_tools[2])
+    assert path.read_bytes() == original
 
 
 @pytest.fixture

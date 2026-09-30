@@ -83,7 +83,7 @@ def fit_video(path: Path, quality: int, max_duration: int, location: str | None)
     output = path.with_name("normalized.mp4")
     base = [executable("ffmpeg", location), "-nostdin", "-v", "error", "-xerror"]
     try:
-        subprocess.run(
+        normalized = subprocess.run(
             [
                 *base,
                 "-err_detect",
@@ -104,9 +104,11 @@ def fit_video(path: Path, quality: int, max_duration: int, location: str | None)
             stderr=subprocess.PIPE,
             timeout=1800,
         )
+        if normalized.stderr.strip():
+            raise SourceError("processing_error")
         inspect_media(output, max_duration, location)
         # Container metadata alone can look valid while compressed frames are damaged.
-        subprocess.run(
+        decoded = subprocess.run(
             [
                 *base,
                 "-err_detect",
@@ -126,6 +128,9 @@ def fit_video(path: Path, quality: int, max_duration: int, location: str | None)
             stderr=subprocess.PIPE,
             timeout=1800,
         )
+        # Some older FFmpeg versions log decoder errors but still return exit status zero.
+        if decoded.stderr.strip():
+            raise SourceError("processing_error")
     except (subprocess.SubprocessError, OSError) as exc:
         raise SourceError("processing_error") from exc
     output.replace(path)

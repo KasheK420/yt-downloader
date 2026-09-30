@@ -118,8 +118,8 @@ def main() -> int:
                         capture_output=True,
                         timeout=90,
                     )
-                    result["full_decode"] = decoded.returncode == 0
-                    if decoded.returncode:
+                    result["full_decode"] = decoded.returncode == 0 and not decoded.stderr.strip()
+                    if not result["full_decode"]:
                         failed = True
                 else:
                     failed = True
