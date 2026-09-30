@@ -33,7 +33,8 @@ change. Use a host with enough temporary disk, an explicit data-volume quota, an
    X-Forwarded-For to evade quotas. Otherwise all users share the proxy's rate limit.
 6. Add edge request-rate limits, connection/download limits, and a small upload body limit.
    Apply host firewall/container egress rules that prevent reaching private/link-local networks
-   if running untrusted public traffic. Application URLs are already restricted to YouTube.
+   if running untrusted public traffic. Application URLs are restricted to approved YouTube,
+   Facebook, and Instagram video/share paths.
 7. Verify the public-host checks below before announcing availability.
 
 ```sh
@@ -57,12 +58,13 @@ The application has one worker per data directory. Do not add replicas or Uvicor
 - A normal same-origin job is accepted; a foreign Origin is rejected.
 - Two separate browser profiles cannot read, cancel, or download each other's jobs.
 - Directly spoofed forwarded headers do not change the rate-limit identity.
-- A real video and MP3 download succeed from the deployment host and pass ffprobe.
+- A real video and MP3 download from each enabled provider succeed from the deployment host
+  and pass ffprobe. Use a source with an audio track when checking MP3.
 - Cancellation, timeout, restart, expiry, and volume limits behave correctly under load.
 - The raw application port is unreachable externally and file responses are never cached.
 - Monitor process readiness, disk usage, memory, job failures, and abuse. Confirm rollback.
 
-Datacenter IPs may be rate-limited or challenged by YouTube. Local success does not establish
+Datacenter IPs may be rate-limited or challenged by providers. Local success does not establish
 provider availability from a future server. This app has no cookie-upload, account-bypass,
 or arbitrary provider configuration endpoint.
 
@@ -79,7 +81,8 @@ docker compose up -d --wait
 Record the old source commit/image ID first. To roll back, check out the prior release in a
 separate clean deployment checkout and recreate using its image and Compose configuration.
 Back up the data volume before a future database-schema migration. Schema version 0.1.0 is
-created on first run and has no destructive upgrade step.
+created on first run and has no destructive upgrade step. Version 0.2.0 reuses that schema;
+existing YouTube jobs and signing keys remain compatible.
 
 The manual Release workflow accepts a version matching `pyproject.toml`, checks successful CI
 for that exact commit, publishes `ghcr.io/kashek420/yt-downloader:<version>`, and creates a GitHub
@@ -104,4 +107,4 @@ usage. A startup lock error means another process owns this data directory. Stop
 before restarting; do not remove an active lock and run two workers.
 
 Native verification writes no production data. Public-provider smoke uses a temporary directory
-and deletes its media. Normal CI uses generated synthetic fixtures and never contacts YouTube.
+and deletes its media. Normal CI uses generated synthetic fixtures and never contacts providers.

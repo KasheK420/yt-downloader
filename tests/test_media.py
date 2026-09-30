@@ -32,7 +32,7 @@ def media_tools():
 
 
 @pytest.fixture
-def media_server(tmp_path: Path, media_tools):
+def media_server(tmp_path: Path, media_tools, request):
     ffmpeg, _, _ = media_tools
     source = tmp_path / "source"
     source.mkdir()
@@ -44,7 +44,7 @@ def media_server(tmp_path: Path, media_tools):
             "-f",
             "lavfi",
             "-i",
-            "color=c=blue:s=160x90:r=12",
+            f"color=c=blue:s={request.param}:r=12",
             "-f",
             "lavfi",
             "-i",
@@ -73,37 +73,53 @@ def media_server(tmp_path: Path, media_tools):
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
-        yield f"http://127.0.0.1:{server.server_port}/sample.mp4"
+        width, height = map(int, request.param.split("x"))
+        yield f"http://127.0.0.1:{server.server_port}/sample.mp4", width, height
     finally:
         server.shutdown()
         server.server_close()
         thread.join()
 
 
-@pytest.mark.parametrize("kind,quality,codec", [("mp3", 192, "mp3"), ("mp4", 720, "h264")])
+@pytest.mark.parametrize("media_server", ["160x90", "450x800", "800x450"], indirect=True)
+@pytest.mark.parametrize("kind,quality,codec", [("mp3", 192, "mp3"), ("mp4", 360, "h264")])
+@pytest.mark.parametrize(
+    "duration,limit,error", [(1, 10, None), (None, 10, None), (None, 0.5, "duration_limit")]
+)
 def test_worker_converts_real_synthetic_media(
-    tmp_path, media_tools, media_server, monkeypatch, capsys, kind, quality, codec
+    tmp_path,
+    media_tools,
+    media_server,
+    monkeypatch,
+    capsys,
+    kind,
+    quality,
+    codec,
+    duration,
+    limit,
+    error,
 ):
     original = yt_dlp.YoutubeDL
 
-    class FixtureIE(InfoExtractor):
-        _VALID_URL = r"fixture:(?P<id>video)"
+    class YoutubeIE(InfoExtractor):
+        _VALID_URL = r"https://www.youtube.com/watch\?v=(?P<id>BaW_jenozKc)"
 
         def _real_extract(self, url):
             return {
                 "id": "video",
                 "title": "Synthetic test",
-                "duration": 1,
-                "url": media_server,
+                "duration": duration,
+                "url": media_server[0],
                 "ext": "mp4",
-                "height": 90,
+                "width": media_server[1],
+                "height": media_server[2],
                 "vcodec": "h264",
                 "acodec": "aac",
             }
 
     def fixture_downloader(options):
         downloader = original(options, auto_init=False)
-        downloader.add_info_extractor(FixtureIE())
+        downloader.add_info_extractor(YoutubeIE())
         return downloader
 
     monkeypatch.setattr(yt_dlp, "YoutubeDL", fixture_downloader)
@@ -111,14 +127,20 @@ def test_worker_converts_real_synthetic_media(
     output_dir.mkdir()
     monkeypatch.chdir(output_dir)
     args = argparse.Namespace(
-        url="fixture:video",
+        url="https://www.youtube.com/watch?v=BaW_jenozKc",
         kind=kind,
         quality=quality,
-        max_duration=10,
+        max_duration=limit,
         max_file_bytes=1024 * 1024,
         js_runtime="node",
         ffmpeg_location=media_tools[2],
     )
+    if error:
+        assert download(args) == 1
+        events = capsys.readouterr().out
+        assert f'"code": "{error}"' in events
+        assert '"event": "complete"' not in events
+        return
     assert download(args) == 0
     output = output_dir / f"media.{kind}"
     assert output.is_file()
@@ -132,6 +154,12 @@ def test_worker_converts_real_synthetic_media(
     assert codec in {stream["codec_name"] for stream in streams}
     if kind == "mp3":
         assert all(stream["codec_type"] == "audio" for stream in streams)
+    else:
+        video = next(stream for stream in streams if stream["codec_type"] == "video")
+        assert min(video["width"], video["height"]) <= quality
+        assert video["width"] <= media_server[1] and video["height"] <= media_server[2]
+        assert (video["height"] > video["width"]) == (media_server[2] > media_server[1])
+        assert any(stream["codec_type"] == "audio" for stream in streams)
     assert '"event": "complete"' in capsys.readouterr().out
 
 
@@ -139,8 +167,11 @@ def test_worker_converts_real_synthetic_media(
     "metadata,expected",
     [
         ({"duration": 7201}, "duration_limit"),
-        ({"duration": None}, "duration_limit"),
+        ({"duration": float("nan")}, "duration_limit"),
+        ({"duration": float("inf")}, "duration_limit"),
+        ({"duration": -1}, "duration_limit"),
         ({"duration": 30, "is_live": True}, "live_unsupported"),
+        ({"duration": 30, "acodec": "none"}, "audio_unavailable"),
     ],
 )
 def test_worker_rejects_ineligible_media_before_download(
@@ -148,8 +179,8 @@ def test_worker_rejects_ineligible_media_before_download(
 ):
     original = yt_dlp.YoutubeDL
 
-    class IneligibleIE(InfoExtractor):
-        _VALID_URL = r"fixture:(?P<id>video)"
+    class YoutubeIE(InfoExtractor):
+        _VALID_URL = r"https://www.youtube.com/watch\?v=(?P<id>BaW_jenozKc)"
 
         def _real_extract(self, url):
             return {
@@ -163,15 +194,15 @@ def test_worker_rejects_ineligible_media_before_download(
 
     def fixture_downloader(options):
         downloader = original(options, auto_init=False)
-        downloader.add_info_extractor(IneligibleIE())
+        downloader.add_info_extractor(YoutubeIE())
         return downloader
 
     monkeypatch.setattr(yt_dlp, "YoutubeDL", fixture_downloader)
     monkeypatch.chdir(tmp_path)
     args = argparse.Namespace(
-        url="fixture:video",
-        kind="mp4",
-        quality=720,
+        url="https://www.youtube.com/watch?v=BaW_jenozKc",
+        kind="mp3" if expected == "audio_unavailable" else "mp4",
+        quality=192 if expected == "audio_unavailable" else 720,
         max_duration=7200,
         max_file_bytes=1024 * 1024,
         js_runtime="node",

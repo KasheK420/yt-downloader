@@ -27,8 +27,10 @@ POST and DELETE require `X-Requested-With: yt-downloader`. JSON request bodies a
 
 `kind` is `mp4` with quality 360/720/1080, or `mp3` with quality 128/192/320. Unknown fields
 are rejected. A playlist query alongside a video ID is discarded: only the video is processed.
+The URL may point to YouTube, Facebook, or Instagram; see [SOURCES.md](SOURCES.md).
+The session response includes `providers: ["youtube", "facebook", "instagram"]`.
 
-Job fields: `id`, `kind`, `quality`, `state`, `title`, `progress`, `error`, `file_bytes`,
+Job fields: `id`, `provider`, `kind`, `quality`, `state`, `title`, `progress`, `error`, `file_bytes`,
 `created_at`, `expires_at`. Timestamps are Unix seconds. Progress is a provider estimate and
 may reset between separate audio/video streams. Conversion is indeterminate. No API response
 contains the source URL, anonymous owner, peer address, or filesystem path.
@@ -53,8 +55,11 @@ contains the source URL, anonymous owner, peer address, or filesystem path.
 | 503  | `runtime_unavailable`, `storage_full`                                          |
 
 Terminal job errors: `provider_error`, `processing_error`, `duration_limit`, `live_unsupported`,
-`size_limit`, `timeout`, `interrupted`, `storage_full`. Provider errors can mean unavailable,
-private, restricted, rate-limited, or changed YouTube behavior; raw provider details are withheld.
+`size_limit`, `timeout`, `interrupted`, `storage_full`, `playlist_unsupported`, `link_unresolved`,
+`audio_unavailable` (the provider offers no audio track for an MP3 request).
+The collection and share-link codes mean a collection was returned or a share link did not
+resolve to an approved direct video. Provider errors can mean unavailable, private, restricted, rate-limited, or
+changed provider behavior; raw provider details are withheld.
 
 ## Local curl example
 

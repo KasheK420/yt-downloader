@@ -7,6 +7,7 @@ container components retain their own licenses, notices, and distribution obliga
 | ---------- | ------------------------------------------------------------------------------------- |
 | yt-dlp     | https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE and its THIRD_PARTY_LICENSES.txt |
 | yt-dlp-ejs | https://github.com/yt-dlp/ejs                                                         |
+| curl-cffi  | https://github.com/lexiforest/curl_cffi/blob/main/LICENSE ; bundled curl notices apply |
 | FFmpeg     | https://ffmpeg.org/legal.html ; Debian package license/build configuration applies    |
 | FastAPI    | https://github.com/fastapi/fastapi/blob/master/LICENSE                                |
 | Starlette  | https://github.com/Kludex/starlette/blob/main/LICENSE.md                              |

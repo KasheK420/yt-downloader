@@ -22,7 +22,7 @@ from app.files import MediaFiles
 from app.runner import Runner
 from app.security import BodyLimitMiddleware, signing_secret
 from app.store import LimitExceeded, Store
-from app.urls import normalize_url
+from app.urls import normalize_url, provider_for
 
 STATIC = Path(__file__).parent / "static"
 COOKIE = "ytd_session"
@@ -75,7 +75,10 @@ def public_job(job: dict[str, Any]) -> dict[str, Any]:
         "created_at",
         "expires_at",
     }
-    return {key: value for key, value in job.items() if key in keys}
+    return {
+        **{key: value for key, value in job.items() if key in keys},
+        "provider": provider_for(job["url"]),
+    }
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -96,7 +99,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="yt-downloader",
-        version="0.1.0",
+        version="0.2.0",
         lifespan=lifespan,
         docs_url=None,
         redoc_url=None,
@@ -192,6 +195,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "max_file_bytes": settings.max_file_bytes,
             "retention_seconds": settings.retention_seconds,
             "ready": all(runtime_status(settings).values()),
+            "providers": ["youtube", "facebook", "instagram"],
             "server_time": time.time(),
         }
 

@@ -159,7 +159,15 @@ class Runner:
                 candidate = event.get("code")
                 error = (
                     candidate
-                    if candidate in {"duration_limit", "live_unsupported", "size_limit"}
+                    if candidate
+                    in {
+                        "duration_limit",
+                        "live_unsupported",
+                        "size_limit",
+                        "playlist_unsupported",
+                        "link_unresolved",
+                        "audio_unavailable",
+                    }
                     else "provider_error"
                 )
         return error

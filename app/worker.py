@@ -2,11 +2,15 @@
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
 
 import yt_dlp
+
+from app.media import fit_video, inspect_media
+from app.sources import SourceError, extract_video
 
 
 def emit(event: str, **values: Any) -> None:
@@ -35,10 +39,15 @@ def download(args: argparse.Namespace) -> int:
             failure = "live_unsupported"
             return failure
         duration = info.get("duration")
-        if not isinstance(duration, (int, float)) or duration > args.max_duration:
+        if duration is not None and (
+            not isinstance(duration, (int, float))
+            or not math.isfinite(duration)
+            or duration <= 0
+            or duration > args.max_duration
+        ):
             failure = "duration_limit"
             return failure
-        emit("metadata", title=str(info.get("title") or "YouTube video")[:300])
+        emit("metadata", title=str(info.get("title") or "Video")[:300])
         return None
 
     def progress(data: dict[str, Any]) -> None:
@@ -89,24 +98,36 @@ def download(args: argparse.Namespace) -> int:
             {"key": "FFmpegMetadata", "add_metadata": True},
         ]
     else:
-        options["format"] = (
-            f"bestvideo[height<={args.quality}][ext=mp4]+bestaudio[ext=m4a]/"
-            f"best[height<={args.quality}][ext=mp4]"
-        )
+        options["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/bestvideo[ext=mp4]"
+        options["format_sort"] = [f"res:{args.quality}"]
         options["merge_output_format"] = "mp4"
         options["postprocessors"] = [{"key": "FFmpegMetadata", "add_metadata": True}]
     try:
         with yt_dlp.YoutubeDL(options) as downloader:
-            downloader.download([args.url])
+            info = extract_video(downloader, args.url)
+            if reason := metadata(info):
+                raise SourceError(reason)
+            formats = info.get("formats") or [info]
+            if args.kind == "mp3" and all(item.get("acodec") == "none" for item in formats):
+                raise SourceError("audio_unavailable")
+            downloader.process_ie_result(info, download=True)
         output = Path(f"media.{args.kind}")
         if not output.is_file():
             emit("error", code=failure)
             return 1
+        if args.kind == "mp4":
+            emit("processing")
+            fit_video(output, args.quality, args.max_duration, args.ffmpeg_location)
+        else:
+            inspect_media(output, args.max_duration, args.ffmpeg_location)
         if output.stat().st_size > args.max_file_bytes:
             emit("error", code="size_limit")
             return 1
         emit("complete")
         return 0
+    except SourceError as exc:
+        emit("error", code=str(exc))
+        return 1
     except Exception:
         emit("error", code=failure)
         return 1

@@ -6,7 +6,7 @@ flowchart LR
   API --> DB[(SQLite metadata)]
   DB --> Runner[Single queue runner]
   Runner --> Child[Isolated yt-dlp worker]
-  Child --> YouTube[YouTube]
+  Child --> Sources[YouTube / Facebook / Instagram]
   Child --> FFmpeg[FFmpeg]
   FFmpeg --> Files[Temporary media volume]
   API --> Files
@@ -18,6 +18,8 @@ flowchart LR
 | ----------------- | --------------------------------------------------------------------- |
 | `app/config.py`   | Validated configuration and resource limits                           |
 | `app/urls.py`     | Canonical single-video URL boundary                                   |
+| `app/sources.py`  | Bounded share-link resolution and single-video extraction             |
+| `app/media.py`    | Actual-duration validation and portrait-aware MP4 sizing               |
 | `app/security.py` | Persistent signing key and bounded request bodies                     |
 | `app/store.py`    | SQLite transactions, quotas, ownership, claims, and retention         |
 | `app/files.py`    | Generated job directories, safe paths, size accounting, and cleanup   |
@@ -36,6 +38,16 @@ Queue admission uses `BEGIN IMMEDIATE` so simultaneous requests cannot oversubsc
 The runner claims one job at a time and invokes Python with a fixed argument list and a
 canonical URL. No shell runs user input. Child stdout contains bounded JSON progress events;
 provider messages are not exposed to visitors. Parent monitoring continues while FFmpeg works.
+
+The worker chooses a provider-specific extractor after validation. Raw extraction results are
+inspected before yt-dlp processes them: collection results are rejected, and delegated URLs
+must stay on the same provider and pass validation again. Share redirects run in the child,
+never on the API event loop, and cannot request a host outside the allowlist.
+
+Known excessive durations are rejected before media transfer. If a provider omits duration,
+existing byte/time controls bound the transfer and ffprobe checks the actual result before
+completion. Every MP4 and MP3 receives this final duration check. MP4 dimensions are measured;
+larger renditions are scaled to the selected shorter-edge limit with orientation preserved.
 
 Failure is published after process termination and removal of partial files. Cancellation
 updates the job immediately and waits for cleanup before responding. On startup, a file lock

@@ -1,17 +1,18 @@
 # Verification evidence
 
-## Local checks - 2026-09-30
+## v0.2.0 local checks - 2026-09-30
 
-Environment: Windows, Python 3.13.15, Node 24.21.0, yt-dlp 2026.8.19, FFmpeg 9.0.2.
+Environment: Windows, Python 3.13.15, Node 24.21.0, yt-dlp 2026.8.19 with curl-cffi 0.16.3,
+FFmpeg 9.0.2.
 All media produced during live checks was held in temporary directories and removed.
 
 | Check                     | Result                                                    |
 | ------------------------- | --------------------------------------------------------- |
-| Python backend suite      | 52 passed; 1 symlink test skipped for Windows privilege   |
-| Real synthetic conversion | MP4 and MP3 through yt-dlp/FFmpeg passed; codecs probed   |
-| Browser suite             | 8 passed, desktop and mobile                              |
-| Accessibility             | No serious/critical axe findings in the tested initial UI |
-| Ruff lint/format          | Passed before repository publication                      |
+| Python backend suite      | 138 passed; 1 symlink test skipped for Windows privilege  |
+| Real synthetic conversion | Landscape/portrait MP4 and MP3 passed; dimensions/codecs/duration probed |
+| Browser suite             | 16 passed, desktop and mobile                             |
+| Accessibility             | No serious/critical axe findings in initial UI and expanded help/failure state |
+| Ruff lint/format          | Passed                                                    |
 | mypy                      | Passed for application modules                            |
 | Python dependency audit   | No known vulnerabilities reported                         |
 | npm dependency audit      | No vulnerabilities reported                               |
@@ -21,8 +22,13 @@ All media produced during live checks was held in temporary directories and remo
 The browser tests control API responses; they prove UI behavior, not provider availability.
 Backend tests use real temporary SQLite databases and child processes. Media conversion tests
 serve generated one-second media on a loopback HTTP fixture and use actual yt-dlp/FFmpeg.
+Additional cases cover exact social URL boundaries, per-hop redirect validation, collection
+rejection before entry traversal, explicit extractor routing, provider ownership isolation,
+silent-source MP3 rejection, missing/invalid/over-limit duration, and preserved orientation.
+Application coverage was 89%; the isolated worker is exercised by real-media tests but excluded
+from that numeric coverage setting. Screenshots were inspected at desktop and mobile sizes.
 
-## Live YouTube check - 2026-09-30
+## Live YouTube check - 2026-09-30 (repeated for v0.2.0)
 
 Command: `uv run python -m scripts.live_smoke https://www.youtube.com/watch?v=aqz-KE-bpKQ`
 
@@ -38,6 +44,30 @@ the bytes delivered by that endpoint.
 An earlier attempt against the old yt-dlp test video `BaW_jenozKc` failed because YouTube reports
 that video unavailable. The application reported a controlled provider error. The successful
 check above used an available source; availability of arbitrary videos is not guaranteed.
+
+## Live Facebook and Instagram checks - 2026-09-30
+
+The same HTTP/queue/worker/attachment smoke and ffprobe verification used public URLs from
+the locked upstream extractor's test fixtures. No account cookies were supplied. All media
+was temporary and removed after the check.
+
+| Source | Output | Verified result |
+| --- | --- | --- |
+| Facebook video `106560053808006` | MP4, up to 360p | 95,280 bytes; H.264 + AAC; 224 x 400, no upscaling |
+| Same Facebook video | MP3, 192 kbps | 79,973 bytes; MP3 audio |
+| Facebook `/reel/106560053808006/` | MP4 | Complete through real Reel-to-video delegation |
+| Instagram Reel `Chunk8-jurw` | MP4, up to 360p | 416,385 bytes; H.264; 360 x 640 |
+| Instagram post `aye83DjauH` | MP4, up to 360p | 411,980 bytes; H.264; 360 x 360 |
+| Tested Instagram sources | MP3 | No audio rendition supplied; controlled `audio_unavailable`, no completed file |
+
+Instagram did not supply duration for the tested Reel. The final media-duration check passed
+without weakening deadline or byte limits. The older Instagram TV fixture `BkfuX9UB-eK` returned
+a controlled provider error for both formats; it is not recorded as a success.
+
+**Live Instagram MP3 with an audio-bearing source remains unverified.** The shared MP3 worker
+path passes real synthetic tests and live YouTube/Facebook checks. Share-link resolution passes
+deterministic redirect tests; arbitrary live share URLs and hosted provider access are not
+claimed as verified.
 
 ## CI and hosting
 

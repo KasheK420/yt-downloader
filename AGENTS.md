@@ -13,13 +13,15 @@ and pull requests in English. The UI supports Czech and English.
 - Stage explicit paths. Never commit secrets, media, cookies, personal history, or `.env` files.
 - Do not add AI co-author trailers to commits.
 - Keep dependencies locked with `uv.lock` and `package-lock.json`.
-- Distinguish synthetic tests from live YouTube verification and deployed acceptance.
+- Distinguish synthetic tests from live provider verification and deployed acceptance.
 
 ## Boundaries
 
 - Single application process and one download worker. Do not increase Uvicorn workers.
-- Accept only canonicalized single-video YouTube URLs; never accept arbitrary download URLs,
+- Accept only canonicalized single-video YouTube, Facebook, or Instagram URLs; never accept arbitrary download URLs,
   shell arguments, yt-dlp options, cookie uploads, or filesystem paths from clients.
+- Revalidate every share-link and extractor delegation before following it. Keep generic
+  extraction disabled and reject collection results before processing their entries.
 - Preserve anonymous session ownership, request-origin checks, quotas, timeouts, cleanup,
   and safe output path checks. Provider error messages are not public API responses.
 - Deployment defaults to localhost. Public exposure is a separate operator action described

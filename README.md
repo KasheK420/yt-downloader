@@ -4,7 +4,8 @@
 [![CodeQL](https://github.com/KasheK420/yt-downloader/actions/workflows/codeql.yml/badge.svg)](https://github.com/KasheK420/yt-downloader/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A self-hosted web app that turns a YouTube link into an **MP4 video** or **MP3 audio file**.
+A self-hosted web app that turns a **YouTube, Facebook, or Instagram** link into an
+**MP4 video** or **MP3 audio file**.
 Paste a link, choose the format and quality, and download the result. No account required.
 
 ![Czech desktop interface](docs/images/desktop.png)
@@ -13,6 +14,9 @@ Paste a link, choose the format and quality, and download the result. No account
 
 - MP4 video up to 360p, 720p, or 1080p; MP3 audio at 128, 192, or 320 kbps.
 - Standard YouTube links, youtu.be links, Shorts, and completed live-video links.
+- Facebook videos and Reels; Instagram Reels and single-video posts.
+- Bounded share-link resolution and automatic provider identification.
+- Portrait-aware quality limits: keep the orientation and never upscale the source.
 - Queue, progress, cancellation, clear failures, and automatic file expiry.
 - Czech and English UI, responsive layout, keyboard navigation, and no analytics.
 - Anonymous browser sessions isolate jobs and downloads between visitors.
@@ -20,7 +24,10 @@ Paste a link, choose the format and quality, and download the result. No account
 - Single Docker service with Python, yt-dlp, FFmpeg, and Node.js included.
 
 Quality is capped by what the source provides. Increasing the MP3 bitrate cannot restore
-detail absent from the original audio. Playlists and ongoing live streams are not supported.
+detail absent from the original audio. Video resolution limits apply to the shorter edge
+(720p portrait output is up to 720 x 1280 for a 9:16 source). If the provider only offers a
+larger rendition, FFmpeg scales it down. Playlists, carousels, Stories, private videos, and
+ongoing live streams are not supported. See [supported sources](docs/SOURCES.md).
 
 ## Start with Docker
 
@@ -76,7 +83,7 @@ npm audit --audit-level=high
 
 Backend tests use real SQLite databases and child processes. Media tests convert locally
 generated video through real yt-dlp and FFmpeg. Browser tests control API responses to
-verify UI behavior without contacting YouTube. Linux CI also builds and starts the Docker
+verify UI behavior without contacting providers. Linux CI also builds and starts the Docker
 image and runs the symlink test that needs additional privileges on Windows.
 
 A separate opt-in command performs real provider downloads and verifies both output formats:
@@ -86,7 +93,8 @@ uv run python -m scripts.live_smoke 'https://www.youtube.com/watch?v=YOUR_VIDEO_
 ```
 
 Use a short public video you own or have permission to download. It removes all resulting
-media after verification. Normal CI never downloads from YouTube. See the dated
+media after verification. The same command accepts Facebook and Instagram URLs. Normal CI
+never contacts those providers. See the dated
 [verification evidence](docs/VERIFICATION.md) for what has actually been tested.
 
 ## Deployment and maintenance
@@ -96,7 +104,7 @@ is supported by the application model but requires the deployment steps in
 [DEPLOYMENT.md](docs/DEPLOYMENT.md), including HTTPS, edge limits, and trusted proxy configuration.
 There is no live public service deployed by this repository bootstrap.
 
-YouTube changes can break extraction independently of this application. Dependabot proposes
+Provider changes can break extraction independently of this application. Dependabot proposes
 dependency updates; keep the lockfile reviewed and rerun a live smoke after upgrading yt-dlp.
 The manual **Release** workflow publishes a versioned GHCR image and GitHub release only after
 CI has passed for that commit. It never deploys a server automatically.
@@ -108,6 +116,7 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Architecture](docs/ARCHITECTURE.md)   | Modules, flow, lifecycle, and resource controls        |
 | [Configuration](docs/CONFIGURATION.md) | Every environment variable and default                 |
 | [API](docs/API.md)                     | Session, job, and file endpoints                       |
+| [Sources](docs/SOURCES.md)             | Supported links, provider behavior, and limits         |
 | [Deployment](docs/DEPLOYMENT.md)       | Private setup, public launch, proxying, and operations |
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |
 | [Roadmap](docs/ROADMAP.md)             | Public-launch acceptance and future work               |
@@ -120,4 +129,5 @@ CI has passed for that commit. It never deploys a server automatically.
 
 Application code is [MIT licensed](LICENSE). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 for runtime dependencies and their separate licenses. Download only content you own or have
-permission to download. This project is not affiliated with YouTube or Google.
+permission to download. This project is not affiliated with YouTube, Google, Facebook,
+Instagram, or Meta.
