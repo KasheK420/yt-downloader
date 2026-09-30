@@ -13,7 +13,7 @@ Guest access works out of the box; optional Google/Facebook sign-in adds an acco
 
 ## Features
 
-- MP4 video up to 360p, 720p, or 1080p; MP3 audio at 128, 192, or 320 kbps.
+- MP4 video (H.264/AAC) up to 360p, 720p, or 1080p; MP3 audio at 128, 192, or 320 kbps.
 - Standard YouTube links, youtu.be links, Shorts, and completed live-video links.
 - Facebook videos and Reels; Instagram Reels and single-video posts.
 - Bounded share-link resolution and automatic provider identification.
@@ -32,6 +32,12 @@ detail absent from the original audio. Video resolution limits apply to the shor
 (720p portrait output is up to 720 x 1280 for a 9:16 source). If the provider only offers a
 larger rendition, FFmpeg scales it down. Playlists, carousels, Stories, private videos, and
 ongoing live streams are not supported. See [supported sources](docs/SOURCES.md).
+
+MP4 output uses H.264 with 8-bit 4:2:0 pixels and AAC audio when sound is present. AV1,
+HEVC and other incompatible streams are converted even when their resolution already fits.
+Compatible streams are copied without another lossy encode. The index is placed first for
+playback, and every resulting MP4 is fully decoded before completion. Conversion and validation
+can take additional time; existing job deadlines and byte limits still apply.
 
 ## Start with Docker
 

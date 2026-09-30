@@ -51,6 +51,13 @@ Known excessive durations are rejected before media transfer. If a provider omit
 existing byte/time controls bound the transfer and ffprobe checks the actual result before
 completion. Every MP4 and MP3 receives this final duration check. MP4 dimensions are measured;
 larger renditions are scaled to the selected shorter-edge limit with orientation preserved.
+MP4 normalization also enforces H.264/yuv420p and AAC-LC audio when present, regardless of
+resolution. Compatible streams are remuxed without re-encoding; other streams are converted.
+The MP4 index is moved before media data (faststart). A full strict FFmpeg decode verifies the
+temporary output before it atomically replaces the downloaded file. Decode/conversion failures
+include error-level stderr even when an older FFmpeg returns status zero. They become
+`processing_error` and cannot publish a completed job. All work remains inside the
+worker's existing deadline and storage limits.
 
 Failure is published after process termination; cleanup failures cannot leave the job active.
 Cancellation updates the job immediately, stops its child and attempts cleanup. A separate
@@ -64,7 +71,7 @@ allowlist; OAuth client credentials are not passed to them.
 
 ## Ownership and requests
 
-`GET /api/session` creates or refreshes an opaque browser session whose hash is stored in SQLite.
+`GET /api/session` creates or reads an opaque browser session whose hash is stored in SQLite.
 Legacy signed guest cookies migrate on first refresh. Guest owners and account owners isolate
 jobs; sign-in rotates the session and moves guest jobs/usage to the account atomically. Logout
 revokes the local token and all-device logout revokes every token for that account. Each job
