@@ -123,8 +123,10 @@ async def test_restart_cleans_orphans_and_preserves_completed_media(settings: Se
         await runner.stop()
 
 
-@pytest.mark.parametrize("error", ["playlist_unsupported", "link_unresolved", "audio_unavailable"])
-async def test_social_failures_remain_actionable_and_remove_partial_files(
+@pytest.mark.parametrize(
+    "error", ["playlist_unsupported", "link_unresolved", "audio_unavailable", "processing_error"]
+)
+async def test_worker_failures_remain_actionable_and_remove_partial_files(
     settings, monkeypatch, error
 ):
     store = Store(settings)

@@ -43,7 +43,9 @@ automatically retry POST requests. Successful retries of a failed job use a new 
 | Missing source duration | Final ffprobe duration check; byte/time ceilings remain active |
 | Oversize, over-duration or timeout | Worker terminates; partial files are removed or cleanup is retried |
 | Quality unavailable / portrait source | Use available source, keep orientation, downscale without upscaling |
-| Browser does not support source codec | Inline-player explanation; attachment still available |
+| Source uses AV1, HEVC, unusual pixels or non-AAC audio | Convert affected streams to H.264/yuv420p and AAC; retain dimensions within the ceiling |
+| Damaged compressed frames despite readable metadata | Full decode fails; report `processing_error` without publishing a completed file |
+| Browser still cannot play normalized media | Inline-player explanation; attachment still available |
 | Session expires or connectivity drops | Bounded requests, coalesced session recovery, poll backoff and manual reconnect |
 | Anonymous cookie is lost | Guest history cannot be recovered; IP allowance remains. Accounts can sign in again |
 | File expires between a click and response | Controlled 404/410; never navigate into raw provider errors |

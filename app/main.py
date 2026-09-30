@@ -106,7 +106,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="yt-downloader",
-        version="0.3.0",
+        version="0.3.1",
         lifespan=lifespan,
         docs_url=None,
         redoc_url=None,

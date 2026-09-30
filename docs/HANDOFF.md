@@ -3,7 +3,8 @@
 ## State
 
 - Public source repository: `KasheK420/yt-downloader`.
-- Current source version: 0.3.0. Python/FastAPI service with static bilingual UI.
+- Current source version: 0.3.1. Python/FastAPI service with static bilingual UI.
+- MP4 outputs normalize to H.264/yuv420p and AAC with faststart, then pass a full decode check.
 - Supports YouTube, Facebook, and Instagram single-video links; see [SOURCES.md](SOURCES.md).
 - Scope: private use first; later public guest access plus optional Google/Facebook free accounts.
 - Retries, deletion, owned media previews, independent cleanup, quotas and session recovery are implemented.

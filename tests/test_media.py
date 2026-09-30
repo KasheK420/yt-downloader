@@ -15,6 +15,8 @@ import yt_dlp
 from yt_dlp.extractor.common import InfoExtractor
 
 from app.config import Settings
+from app.media import fit_video, inspect_media
+from app.sources import SourceError
 from app.worker import download
 
 
@@ -29,6 +31,114 @@ def media_tools():
             pytest.fail("CI must provide FFmpeg and ffprobe")
         pytest.skip("Install FFmpeg or set YTD_FFMPEG_LOCATION for real conversion tests")
     return ffmpeg, ffprobe, root
+
+
+def generate_video(path, media_tools, encoder="libx264", pixels="yuv420p", audio="aac"):
+    command = [
+        media_tools[0],
+        "-v",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=s=160x90:r=12",
+    ]
+    if audio:
+        command += ["-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000"]
+    command += ["-t", "0.5", "-c:v", encoder, "-pix_fmt", pixels]
+    if encoder == "libaom-av1":
+        command += ["-cpu-used", "8", "-row-mt", "1"]
+    if encoder == "libx265":
+        command += ["-x265-params", "log-level=error:pools=1"]
+    if audio:
+        command += ["-c:a", audio]
+    subprocess.run([*command, str(path)], check=True, capture_output=True, timeout=30)
+
+
+def video_packets(path, media_tools):
+    result = subprocess.run(
+        [
+            media_tools[1],
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_packets",
+            "-show_entries",
+            "packet=pos,size,data_hash",
+            "-show_data_hash",
+            "sha256",
+            "-of",
+            "json",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(result.stdout)["packets"]
+
+
+@pytest.mark.parametrize(
+    "encoder,pixels,audio",
+    [
+        ("libaom-av1", "yuv420p", "aac"),
+        ("libx265", "yuv420p", "aac"),
+        ("libx264", "yuv444p", "aac"),
+        ("libx264", "yuv420p", "libopus"),
+        ("libx264", "yuv420p", "aac"),
+        ("libx264", "yuv420p", None),
+    ],
+)
+def test_small_mp4_is_playable_h264_aac_with_faststart(
+    tmp_path, media_tools, encoder, pixels, audio
+):
+    path = tmp_path / "media.mp4"
+    generate_video(path, media_tools, encoder, pixels, audio)
+    original_packets = video_packets(path, media_tools)
+    fit_video(path, 720, 10, media_tools[2])
+    streams = inspect_media(path, 10, media_tools[2])["streams"]
+    video = next(stream for stream in streams if stream["codec_type"] == "video")
+    assert (video["codec_name"], video["pix_fmt"]) == ("h264", "yuv420p")
+    assert (video["width"], video["height"]) == (160, 90)
+    sounds = [stream for stream in streams if stream["codec_type"] == "audio"]
+    assert bool(sounds) == bool(audio)
+    assert all(stream["codec_name"] == "aac" for stream in sounds)
+    if encoder == "libx264" and pixels == "yuv420p":
+        assert [p["data_hash"] for p in video_packets(path, media_tools)] == [
+            p["data_hash"] for p in original_packets
+        ]  # Compatible video packets must not incur another lossy encoding.
+    data = path.read_bytes()
+    boxes, offset = [], 0
+    while offset + 8 <= len(data):
+        size = int.from_bytes(data[offset : offset + 4], "big")
+        boxes.append(data[offset + 4 : offset + 8])
+        if size == 1:
+            size = int.from_bytes(data[offset + 8 : offset + 16], "big")
+        if size == 0:
+            break
+        offset += size
+    assert boxes.index(b"moov") < boxes.index(b"mdat")
+    subprocess.run(
+        [media_tools[0], "-v", "error", "-xerror", "-i", str(path), "-f", "null", "-"],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    )
+
+
+def test_mp4_with_readable_metadata_but_broken_frames_is_rejected(tmp_path, media_tools):
+    path = tmp_path / "media.mp4"
+    generate_video(path, media_tools)
+    packet = video_packets(path, media_tools)[-1]
+    data = bytearray(path.read_bytes())
+    start, size = int(packet["pos"]), int(packet["size"])
+    data[start + 4 : start + size] = b"\0" * (size - 4)
+    path.write_bytes(data)
+    assert inspect_media(path, 10, media_tools[2])["format"]["duration"]
+    with pytest.raises(SourceError, match="processing_error"):
+        fit_video(path, 720, 10, media_tools[2])
+    assert path.read_bytes() == data
 
 
 @pytest.fixture

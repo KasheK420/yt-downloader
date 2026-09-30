@@ -2,6 +2,15 @@
 
 Changes follow Semantic Versioning. Release publication is explicit through the Release workflow.
 
+## 0.3.1 - 2026-09-30
+
+- Fix MP4 playback compatibility: normalize AV1/HEVC and nonstandard pixel formats to
+  H.264/yuv420p even below the quality ceiling, and normalize incompatible audio to AAC-LC.
+- Preserve already compatible streams without re-encoding and place the MP4 index first.
+- Fully decode normalized MP4 before completion, reject damaged frames, and retain the
+  actionable processing error through the worker boundary.
+- Add real-media regressions and strengthen live smoke checks beyond metadata inspection.
+
 ## 0.3.0 - 2026-09-30
 
 - Add optional Google/Facebook accounts with browser-bound code flows, revocable sessions,

@@ -1,5 +1,37 @@
 # Verification evidence
 
+## v0.3.1 MP4 playback compatibility - 2026-09-30
+
+Local Windows checks: **199 backend tests passed**, one Windows symlink-privilege skip;
+**36 desktop/mobile browser tests passed**. Ruff lint/format, mypy and Prettier passed.
+Application coverage remains 91% with the worker exclusion described below.
+
+A reported 720p MP4 contained AV1/AAC. Its full server-side decode succeeded, so that copy
+was not structurally damaged. The previous early return for videos already below the quality
+ceiling preserved AV1 rather than ensuring H.264 playback compatibility. Earlier metadata-only
+smoke checks did not catch this gap. The original player's error and downloaded local copy
+were not available for direct inspection; those are not claimed as independently reproduced.
+
+Seven new real-media cases failed before the fix and now pass: AV1, HEVC, H.264 with 4:4:4
+pixels, non-AAC audio, compatible H.264/AAC, silent H.264, and damaged frame data with readable
+container metadata. Checks cover H.264/yuv420p, AAC, unchanged small dimensions, faststart,
+full decode, preserved packet hashes for compatible video and rejection before replacing a
+damaged source. An eighth regression verifies actionable processing errors and partial cleanup.
+
+The reported server copy was normalized privately to H.264/AAC at 1280 x 720, with unchanged
+duration and successful full decode. A new live YouTube download of the same source passed
+the application/session/worker/attachment path: 14,477,366 bytes, H.264/AAC at 640 x 360,
+and full decode of the HTTP response bytes. Source URL, title and media remain outside Git.
+The live smoke command now rejects incompatible MP4 codecs and decoding failures.
+
+This proves conversion and byte integrity, not acceptance in every player/device. Real OAuth,
+public hosting and the other explicit v0.3.0 verification gaps below remain unchanged.
+For the distinction between a container and installed codec support, see
+[Microsoft's codec FAQ](https://support.microsoft.com/en-us/windows/apps/windowsmediaplayer/codecs-faq).
+Faststart and strict decode options follow the
+[FFmpeg format](https://ffmpeg.org/ffmpeg-formats.html) and
+[command documentation](https://ffmpeg.org/ffmpeg.html).
+
 ## v0.3.0 workflow and accounts - 2026-09-30
 
 Local Windows checks: **191 backend tests passed**, one Windows symlink-privilege skip;

@@ -207,6 +207,7 @@ class Runner:
                         "playlist_unsupported",
                         "link_unresolved",
                         "audio_unavailable",
+                        "processing_error",
                     }
                     else "provider_error"
                 )

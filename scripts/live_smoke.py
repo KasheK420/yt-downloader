@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.media import executable as media_executable
 
 
 def main() -> int:
@@ -83,11 +84,42 @@ def main() -> int:
                         video = next(
                             (stream for stream in streams if stream["codec_type"] == "video"), None
                         )
-                        if not video or min(video["width"], video["height"]) > quality:
+                        if (
+                            not video
+                            or video["codec_name"] != "h264"
+                            or video.get("pix_fmt") != "yuv420p"
+                            or min(video["width"], video["height"]) > quality
+                            or any(
+                                s["codec_name"] != "aac"
+                                for s in streams
+                                if s["codec_type"] == "audio"
+                            )
+                        ):
                             failed = True
                         elif video:
                             result["dimensions"] = [video["width"], video["height"]]
                     if response.status_code != 200 or (kind == "mp3" and "mp3" not in codecs):
+                        failed = True
+                    decoded = subprocess.run(
+                        [
+                            media_executable("ffmpeg", settings.ffmpeg_location),
+                            "-nostdin",
+                            "-v",
+                            "error",
+                            "-xerror",
+                            "-err_detect",
+                            "explode",
+                            "-i",
+                            str(output),
+                            "-f",
+                            "null",
+                            "-",
+                        ],
+                        capture_output=True,
+                        timeout=90,
+                    )
+                    result["full_decode"] = decoded.returncode == 0
+                    if decoded.returncode:
                         failed = True
                 else:
                     failed = True

@@ -1,6 +1,6 @@
 [project]
 name = "yt-downloader"
-version = "0.3.0"
+version = "0.3.1"
 description = "A self-hosted YouTube, Facebook and Instagram video and MP3 downloader."
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
