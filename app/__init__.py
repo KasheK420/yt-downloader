@@ -1,1 +1,1 @@
-"""YouTube downloader application."""
+"""YouTube, Facebook, and Instagram downloader application."""

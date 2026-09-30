@@ -9,7 +9,9 @@ The latest `main` and latest release receive fixes. No response-time SLA is prom
 
 ## Application boundaries
 
-- Only explicit YouTube video hosts and URL shapes are accepted and rewritten to a canonical URL.
+- Only explicit YouTube, Facebook, and Instagram video hosts/paths are accepted and canonicalized.
+- Share-link redirects are bounded and validated before each request. Extractor delegation stays
+  within the same approved provider. Generic extraction and collection traversal are disabled.
 - Client input never becomes shell commands, yt-dlp options, cookie files, or output paths.
 - Every job endpoint checks a signed anonymous owner cookie. A job ID alone grants no access.
 - Mutation requests require a custom same-origin header; foreign Origin values are rejected.
@@ -38,6 +40,8 @@ Stored data consists of canonical video URL, format, quality, title, job state/t
 temporary media, an anonymous owner identifier, and a short-lived keyed hash of the peer address.
 Terminal jobs and files expire after one hour by default; rate records expire after ten minutes.
 No analytics, remote fonts, thumbnails, user accounts, or third-party frontend scripts are used.
-Outgoing media requests go to YouTube and its media infrastructure.
+Outgoing media requests go to the selected provider (YouTube, Facebook, or Instagram) and its
+media infrastructure. No browser credentials or account cookies are imported. Unknown source
+duration is checked with ffprobe before completion; size/time limits still bound the download.
 
 See [deployment guidance](docs/DEPLOYMENT.md) before making an instance public.

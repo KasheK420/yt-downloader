@@ -3,9 +3,11 @@
 ## State
 
 - Public source repository: `KasheK420/yt-downloader`.
-- Initial version: 0.1.0. Python/FastAPI service with static bilingual UI.
+- Current source version: 0.2.0. Python/FastAPI service with static bilingual UI.
+- Supports YouTube, Facebook, and Instagram single-video links; see [SOURCES.md](SOURCES.md).
 - Scope: private use first, later public use without login.
-- MP4/MP3 paths were exercised with a real YouTube video and verified with ffprobe.
+- Live YouTube/Facebook MP4 and MP3 and Instagram MP4 passed ffprobe checks. Tested Instagram
+  sources supplied no audio; live Instagram MP3 with audio remains unverified.
 - [VERIFICATION.md](VERIFICATION.md) records test scope and unavailable checks.
 - Production infrastructure has not been changed. Public launch is tracked separately.
 

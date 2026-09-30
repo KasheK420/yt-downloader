@@ -44,7 +44,7 @@ test("submits an MP3 request and shows the finished file", async ({ page }) => {
   });
   await page.goto("/");
   await page.getByLabel("Jazyk / Language").selectOption("en");
-  await page.getByLabel("YouTube link").fill("https://youtu.be/BaW_jenozKc");
+  await page.getByLabel("Video link").fill("https://youtu.be/BaW_jenozKc");
   await page.getByLabel("Audio MP3").check();
   await page.getByRole("button", { name: "Prepare download" }).click();
   await expect(page.getByRole("link", { name: "Download MP3" })).toBeVisible();
@@ -62,7 +62,7 @@ test("shows a useful rate-limit error and allows retry", async ({ page }) => {
   );
   await page.goto("/");
   await page.getByLabel("Jazyk / Language").selectOption("en");
-  await page.getByLabel("YouTube link").fill("https://youtu.be/BaW_jenozKc");
+  await page.getByLabel("Video link").fill("https://youtu.be/BaW_jenozKc");
   await page.getByRole("button", { name: "Prepare download" }).click();
   await expect(page.getByRole("alert")).toContainText("Too many requests");
   await expect(
@@ -112,4 +112,98 @@ test("is keyboard accessible and has no serious accessibility findings", async (
     path: `test-results/home-${test.info().project.name}.png`,
     fullPage: true,
   });
+});
+
+for (const [provider, label, url] of [
+  ["facebook", "Facebook", "https://www.facebook.com/reel/123456789/"],
+  ["instagram", "Instagram", "https://www.instagram.com/reel/Abc_123/"],
+]) {
+  test(`submits a ${label} video and identifies its source`, async ({
+    page,
+  }) => {
+    let job = null;
+    await page.route("**/api/jobs", async (route) => {
+      if (route.request().method() === "POST") {
+        expect(route.request().postDataJSON()).toEqual({
+          url,
+          kind: "mp4",
+          quality: 720,
+        });
+        job = {
+          id: "c".repeat(32),
+          provider,
+          title: "A public Reel",
+          kind: "mp4",
+          quality: 720,
+          state: "complete",
+          progress: 100,
+          file_bytes: 102400,
+          expires_at: Date.now() / 1000 + 3600,
+        };
+        return route.fulfill({ status: 202, json: job });
+      }
+      return route.fulfill({ json: job ? [job] : [] });
+    });
+    await page.goto("/");
+    await page.getByLabel("Jazyk / Language").selectOption("en");
+    await page.getByLabel("Video link").fill(url);
+    await expect(page.locator("#source-status")).toHaveText(`Source: ${label}`);
+    await expect(page.locator(`[data-provider="${provider}"]`)).toHaveClass(
+      /detected/,
+    );
+    await page.getByRole("button", { name: "Prepare download" }).click();
+    await expect(
+      page.getByRole("link", { name: "Download MP4" }),
+    ).toBeVisible();
+    await expect(page.locator(".job-meta")).toContainText(label);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+}
+
+test("explains supported links and collection failures in both languages", async ({
+  page,
+}) => {
+  await page.route("**/api/jobs", (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: "d".repeat(32),
+          provider: "instagram",
+          title: "Instagram post",
+          kind: "mp4",
+          quality: 720,
+          state: "failed",
+          error: "playlist_unsupported",
+        },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByText("Jaké odkazy fungují?", { exact: true }).click();
+  await expect(page.locator("details")).toContainText(
+    "Video musí být dostupné bez přihlášení",
+  );
+  await expect(page.locator(".job-error")).toContainText("více položek");
+  await page.getByLabel("Jazyk / Language").selectOption("en");
+  await expect(page.locator("details")).toContainText("without signing in");
+  await expect(page.locator(".job-error")).toContainText("multiple items");
+  const result = await new AxeBuilder({ page }).analyze();
+  expect(
+    result.violations.filter((v) => ["serious", "critical"].includes(v.impact)),
+  ).toEqual([]);
+});
+
+test("does not identify a lookalike domain as a supported provider", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Odkaz na video")
+    .fill("https://instagram.com.evil.test/reel/abc/");
+  await expect(page.locator("#source-status")).toBeEmpty();
+  await expect(page.locator(".providers .detected")).toHaveCount(0);
 });

@@ -18,6 +18,9 @@ from app.main import create_app
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("url", help="A short public video you are allowed to download")
+    parser.add_argument(
+        "--kind", choices=["mp4", "mp3"], help="Check one output format (default: both)"
+    )
     args = parser.parse_args()
     failed = False
     with tempfile.TemporaryDirectory(prefix="ytd-live-") as directory:
@@ -30,6 +33,8 @@ def main() -> int:
                 print("Runtime unavailable: install FFmpeg, ffprobe and Node.js.")
                 return 1
             for kind, quality in [("mp4", 360), ("mp3", 192)]:
+                if args.kind and args.kind != kind:
+                    continue
                 response = client.post(
                     "/api/jobs",
                     json={"url": args.url, "kind": kind, "quality": quality},
@@ -48,6 +53,7 @@ def main() -> int:
                     time.sleep(0.5)
                     job = client.get(f"/api/jobs/{job['id']}").json()
                 result = {
+                    "provider": job["provider"],
                     "kind": kind,
                     "state": job["state"],
                     "error": job["error"],
@@ -73,6 +79,14 @@ def main() -> int:
                     streams = json.loads(probe.stdout)["streams"]
                     codecs = [stream["codec_name"] for stream in streams]
                     result["codecs"] = codecs
+                    if kind == "mp4":
+                        video = next(
+                            (stream for stream in streams if stream["codec_type"] == "video"), None
+                        )
+                        if not video or min(video["width"], video["height"]) > quality:
+                            failed = True
+                        elif video:
+                            result["dimensions"] = [video["width"], video["height"]]
                     if response.status_code != 200 or (kind == "mp3" and "mp3" not in codecs):
                         failed = True
                 else:

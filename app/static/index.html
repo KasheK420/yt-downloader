@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="A simple, self-hosted YouTube video and MP3 downloader."
+      content="Download public YouTube, Facebook and Instagram videos or MP3 audio with a self-hosted web app."
     />
     <meta name="color-scheme" content="light" />
     <title>yt-downloader · Video & MP3</title>
@@ -42,15 +42,27 @@
       <div class="intro">
         <h1 data-i18n="headline">Tvoje videa.<br />Teď i offline.</h1>
         <p data-i18n="intro">
-          Vlož odkaz z YouTube. Vyber video nebo jen zvuk. Zbytek nech na nás.
+          YouTube, Facebook nebo Instagram. Tvoje oblíbená videa i zvuk na
+          jednom místě.
         </p>
       </div>
       <div class="workspace">
         <section class="composer" aria-labelledby="composer-title">
           <h2 id="composer-title" data-i18n="newDownload">Nové stažení</h2>
+          <ul class="providers" aria-label="YouTube, Facebook, Instagram">
+            <li data-provider="youtube">
+              <span aria-hidden="true"></span>YouTube
+            </li>
+            <li data-provider="facebook">
+              <span aria-hidden="true"></span>Facebook
+            </li>
+            <li data-provider="instagram">
+              <span aria-hidden="true"></span>Instagram
+            </li>
+          </ul>
           <form id="download-form">
             <label class="field-label" for="url" data-i18n="linkLabel"
-              >Odkaz na YouTube</label
+              >Odkaz na video</label
             >
             <div class="url-field">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -62,20 +74,21 @@
                 id="url"
                 name="url"
                 type="url"
-                placeholder="https://www.youtube.com/watch?v=…"
+                placeholder="https://…"
                 required
                 maxlength="2048"
                 autocomplete="off"
                 spellcheck="false"
-                aria-describedby="link-help"
+                aria-describedby="link-help source-status"
               />
               <button id="paste" class="paste" type="button" data-i18n="paste">
                 Vložit
               </button>
             </div>
             <p class="field-help" id="link-help" data-i18n="linkHelp">
-              Fungují i odkazy youtu.be a Shorts.
+              Vlož odkaz na jedno veřejné video, Short nebo Reel.
             </p>
+            <p id="source-status" class="source-status" role="status"></p>
 
             <fieldset class="format-field">
               <legend class="field-label" data-i18n="formatLabel">
@@ -152,6 +165,27 @@
             </button>
             <p class="limits" id="limits"></p>
           </form>
+          <details class="supported-help">
+            <summary data-i18n="supportedLinks">Jaké odkazy fungují?</summary>
+            <dl>
+              <dt>YouTube</dt>
+              <dd data-i18n="youtubeLinks">
+                Videa, Shorts, youtu.be a ukončené živé přenosy.
+              </dd>
+              <dt>Facebook</dt>
+              <dd data-i18n="facebookLinks">
+                Videa, Reels, fb.watch a sdílené odkazy na video.
+              </dd>
+              <dt>Instagram</dt>
+              <dd data-i18n="instagramLinks">
+                Reels a příspěvky s jedním videem, včetně sdílených odkazů.
+              </dd>
+            </dl>
+            <p data-i18n="publicOnly">
+              Video musí být dostupné bez přihlášení. Profily, Stories a alba s
+              více položkami nepodporujeme.
+            </p>
+          </details>
         </section>
 
         <section class="downloads" aria-labelledby="downloads-title">
@@ -203,7 +237,7 @@
     </main>
     <footer class="shell footer">
       <span data-i18n="footer">Jeden odkaz. Tvůj soubor.</span
-      ><span>yt-downloader <span class="version">v0.1.0</span></span>
+      ><span>yt-downloader <span class="version">v0.2.0</span></span>
     </footer>
   </body>
 </html>

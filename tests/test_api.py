@@ -28,8 +28,11 @@ def client(settings: Settings, monkeypatch: pytest.MonkeyPatch):
         yield instance
 
 
-def test_create_list_and_owner_isolation(client: TestClient, settings: Settings) -> None:
-    response = client.post("/api/jobs", json=PAYLOAD, headers=HEADERS)
+@pytest.mark.parametrize(
+    "url", [PAYLOAD["url"], "https://facebook.com/reel/123/", "https://instagram.com/reel/Abc_123/"]
+)
+def test_create_list_and_owner_isolation(client: TestClient, settings: Settings, url: str) -> None:
+    response = client.post("/api/jobs", json={**PAYLOAD, "url": url}, headers=HEADERS)
     assert response.status_code == 202
     job = response.json()
     assert job["state"] == "queued"
@@ -123,3 +126,38 @@ def test_missing_file_is_reported_as_gone(client: TestClient) -> None:
     job_id = response.json()["id"]
     client.app.state.store.update(job_id, state="complete")
     assert client.get(f"/api/jobs/{job_id}/file").status_code == 410
+
+
+@pytest.mark.parametrize(
+    "url,provider,canonical",
+    [
+        (
+            "https://facebook.com/reel/123456789/?ref=tracking",
+            "facebook",
+            "https://www.facebook.com/reel/123456789/",
+        ),
+        (
+            "https://instagram.com/reels/Abc_123/?igsh=tracking",
+            "instagram",
+            "https://www.instagram.com/reel/Abc_123/",
+        ),
+        (PAYLOAD["url"], "youtube", "https://www.youtube.com/watch?v=BaW_jenozKc"),
+    ],
+)
+def test_social_jobs_expose_only_provider_and_keep_canonical_input(
+    client, url, provider, canonical
+):
+    response = client.post("/api/jobs", json={**PAYLOAD, "url": url}, headers=HEADERS)
+    assert response.status_code == 202
+    job = response.json()
+    assert job["provider"] == provider
+    assert "url" not in job and "owner" not in job
+    assert client.get(f"/api/jobs/{job['id']}").json()["provider"] == provider
+    with client.app.state.store._db() as db:
+        assert (
+            db.execute("SELECT url FROM jobs WHERE id = ?", (job["id"],)).fetchone()[0] == canonical
+        )
+
+
+def test_session_reports_supported_providers(client):
+    assert client.get("/api/session").json()["providers"] == ["youtube", "facebook", "instagram"]

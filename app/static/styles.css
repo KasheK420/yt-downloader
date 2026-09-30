@@ -58,6 +58,10 @@ input:focus-visible {
   outline: 3px solid #1b50ed;
   outline-offset: 4px;
 }
+summary:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 4px;
+}
 .shell {
   max-width: 1160px;
   margin: auto;
@@ -154,7 +158,74 @@ input:focus-visible {
   margin: 0;
 }
 .composer h2 {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
+}
+.providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 26px;
+  list-style: none;
+}
+.providers li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.providers li.detected {
+  color: var(--ink);
+  background: #f0f4ff;
+  border-color: #9eafea;
+}
+.providers span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cb3240;
+}
+.providers [data-provider="facebook"] span {
+  background: #326ad4;
+}
+.providers [data-provider="instagram"] span {
+  background: #ae377f;
+}
+.source-status {
+  min-height: 18px;
+  margin: 6px 0 0;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 600;
+}
+.supported-help {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.supported-help summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 600;
+}
+.supported-help dt {
+  color: var(--ink);
+  font-weight: 600;
+  margin-top: 12px;
+}
+.supported-help dd {
+  margin: 0;
+}
+.supported-help p {
+  margin-bottom: 0;
 }
 .field-label {
   font-size: 14px;

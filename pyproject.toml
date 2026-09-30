@@ -1,7 +1,7 @@
 [project]
 name = "yt-downloader"
-version = "0.1.0"
-description = "A self-hosted web app for downloading YouTube video and MP3 audio."
+version = "0.2.0"
+description = "A self-hosted YouTube, Facebook and Instagram video and MP3 downloader."
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 license = "MIT"
@@ -12,7 +12,7 @@ dependencies = [
   "pydantic-settings>=2.11,<3",
   "itsdangerous>=2.2,<3",
   "filelock>=3.19,<4",
-  "yt-dlp[default]>=2026.8.19",
+  "yt-dlp[curl-cffi,default]>=2026.8.19",
 ]
 
 [dependency-groups]

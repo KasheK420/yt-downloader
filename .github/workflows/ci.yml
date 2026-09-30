@@ -78,6 +78,7 @@ jobs:
           curl --fail http://127.0.0.1:8080/ > /tmp/index.html
           docker compose exec -T downloader sh -c 'test "$(id -u)" = 10001'
           docker compose exec -T downloader python -m yt_dlp --version
+          docker compose exec -T downloader python -c 'from curl_cffi import requests; requests.Session().close()'
           docker compose exec -T downloader node --version
       - if: always()
         run: docker compose logs --no-color && docker compose down -v

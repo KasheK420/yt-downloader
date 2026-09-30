@@ -6,6 +6,12 @@ Delivered scope: MP4 and MP3 from single-video URLs, quality controls, bilingual
 anonymous job isolation, queue/progress/cancellation, limits and retention, Docker, tests,
 CI/security tooling, and operator/developer documentation.
 
+## v0.2.0: social video
+
+Facebook videos/Reels and Instagram Reels/single-video posts join YouTube. Shared links are
+resolved within approved hosts. Provider labels, bilingual link help, collection rejection,
+and actual duration/dimension checks cover the new workflows. No database migration is needed.
+
 ## Public launch milestone
 
 The future public service has no login. Before launch:

@@ -5,11 +5,19 @@ const translations = {
     skip: "Přejít ke stažení",
     headline: "Tvoje videa.\nTeď i offline.",
     intro:
-      "Vlož odkaz z YouTube. Vyber video nebo jen zvuk. Zbytek nech na nás.",
+      "YouTube, Facebook nebo Instagram. Tvoje oblíbená videa i zvuk na jednom místě.",
     newDownload: "Nové stažení",
-    linkLabel: "Odkaz na YouTube",
+    linkLabel: "Odkaz na video",
     paste: "Vložit",
-    linkHelp: "Fungují i odkazy youtu.be a Shorts.",
+    linkHelp: "Vlož odkaz na jedno veřejné video, Short nebo Reel.",
+    sourceDetected: (name) => `Zdroj: ${name}`,
+    supportedLinks: "Jaké odkazy fungují?",
+    youtubeLinks: "Videa, Shorts, youtu.be a ukončené živé přenosy.",
+    facebookLinks: "Videa, Reels, fb.watch a sdílené odkazy na video.",
+    instagramLinks:
+      "Reels a příspěvky s jedním videem, včetně sdílených odkazů.",
+    publicOnly:
+      "Video musí být dostupné bez přihlášení. Profily, Stories a alba s více položkami nepodporujeme.",
     formatLabel: "Co chceš stáhnout?",
     videoLabel: "Video MP4",
     videoHint: "Obraz i zvuk",
@@ -46,15 +54,21 @@ const translations = {
     clipboard: "Odkaz vlož do pole pomocí Ctrl+V nebo nabídky Vložit.",
     errors: {
       invalid_request:
-        "Zkontroluj odkaz na jedno video z YouTube a vybranou kvalitu.",
+        "Vlož odkaz na jedno video z YouTube, Facebooku nebo Instagramu a zkontroluj kvalitu.",
       session_limit:
         "Nejdřív dokonči nebo zruš některé ze svých rozpracovaných stahování.",
       rate_limit:
         "Příliš mnoho požadavků. Počkej několik minut a zkus to znovu.",
       queue_full: "Fronta je právě plná. Zkus to za chvíli.",
       provider_error:
-        "YouTube toto video teď neposkytl. Zkus jiný veřejný odkaz nebo to zopakuj později.",
+        "Platforma video teď neposkytla. Ověř, že jde přehrát bez přihlášení, nebo to zkus později.",
+      playlist_unsupported:
+        "Odkaz obsahuje více položek. Vlož odkaz přímo na jedno video nebo Reel.",
+      link_unresolved:
+        "Sdílený odkaz se nepodařilo otevřít. Otevři video v prohlížeči a zkopíruj jeho přímý odkaz.",
       processing_error: "Soubor se nepodařilo zpracovat. Zkus to znovu.",
+      audio_unavailable:
+        "Toto video nemá dostupnou zvukovou stopu. Vyber Video MP4.",
       duration_limit: "Video je příliš dlouhé nebo není dostupná jeho délka.",
       live_unsupported:
         "Probíhající ani plánované živé přenosy zatím nepodporujeme.",
@@ -77,11 +91,18 @@ const translations = {
     skip: "Skip to download",
     headline: "Your videos.\nNow offline.",
     intro:
-      "Paste a YouTube link. Choose video or just audio. We’ll take it from there.",
+      "YouTube, Facebook or Instagram. Your favorite videos and audio, all in one place.",
     newDownload: "New download",
-    linkLabel: "YouTube link",
+    linkLabel: "Video link",
     paste: "Paste",
-    linkHelp: "youtu.be and Shorts links work too.",
+    linkHelp: "Paste a link to one public video, Short or Reel.",
+    sourceDetected: (name) => `Source: ${name}`,
+    supportedLinks: "Which links work?",
+    youtubeLinks: "Videos, Shorts, youtu.be and completed live streams.",
+    facebookLinks: "Videos, Reels, fb.watch and shared video links.",
+    instagramLinks: "Reels and single-video posts, including share links.",
+    publicOnly:
+      "The video must be available without signing in. Profiles, Stories and multi-item albums are not supported.",
     formatLabel: "What would you like to save?",
     videoLabel: "Video MP4",
     videoHint: "Picture and sound",
@@ -118,13 +139,19 @@ const translations = {
     clipboard: "Paste the link into the field with Ctrl+V or the Paste menu.",
     errors: {
       invalid_request:
-        "Check the link to a single YouTube video and the selected quality.",
+        "Use a link to one YouTube, Facebook or Instagram video and check the selected quality.",
       session_limit: "Finish or cancel one of your active downloads first.",
       rate_limit: "Too many requests. Wait a few minutes and try again.",
       queue_full: "The queue is full right now. Try again shortly.",
       provider_error:
-        "YouTube did not provide this video. Try another public link or try again later.",
+        "The platform did not provide this video. Check that it plays without signing in, or try again later.",
+      playlist_unsupported:
+        "This link contains multiple items. Use a direct link to one video or Reel.",
+      link_unresolved:
+        "We couldn’t open this share link. Open the video in your browser and copy its direct link.",
       processing_error: "We couldn’t process this file. Please try again.",
+      audio_unavailable:
+        "This video has no available audio track. Choose Video MP4.",
       duration_limit: "The video is too long, or its duration is unavailable.",
       live_unsupported:
         "Ongoing and upcoming live streams are not supported yet.",
@@ -159,7 +186,49 @@ let submitting = false;
 let lastAnnouncement = "";
 let lastError = null;
 const active = new Set(["queued", "downloading", "processing"]);
+const providerNames = {
+  youtube: "YouTube",
+  facebook: "Facebook",
+  instagram: "Instagram",
+};
 const t = () => translations[language];
+
+function updateSource() {
+  let provider = null;
+  try {
+    const host = new URL($("url").value.trim()).hostname;
+    if (
+      [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "music.youtube.com",
+        "youtu.be",
+      ].includes(host)
+    )
+      provider = "youtube";
+    if (
+      [
+        "facebook.com",
+        "www.facebook.com",
+        "m.facebook.com",
+        "mbasic.facebook.com",
+        "fb.watch",
+      ].includes(host)
+    )
+      provider = "facebook";
+    if (["instagram.com", "www.instagram.com"].includes(host))
+      provider = "instagram";
+  } catch {
+    /* Keep the neutral hint while a link is incomplete. */
+  }
+  $("source-status").textContent = provider
+    ? t().sourceDetected(providerNames[provider])
+    : "";
+  document.querySelectorAll("[data-provider]").forEach((badge) => {
+    badge.classList.toggle("detected", badge.dataset.provider === provider);
+  });
+}
 
 function errorMessage(code) {
   return t().errors[code] || t().errors.network;
@@ -187,6 +256,7 @@ function setLanguage() {
     );
   }
   if (lastError && !$("form-error").hidden) showError(lastError);
+  updateSource();
   setSubmit();
   renderJobs();
 }
@@ -234,6 +304,8 @@ function renderJobs() {
     const metadata = [
       job.kind === "mp3" ? `${job.quality} kbps` : `${job.quality}p`,
     ];
+    if (providerNames[job.provider])
+      metadata.unshift(providerNames[job.provider]);
     if (job.file_bytes)
       metadata.push(`${(job.file_bytes / 1024 ** 2).toFixed(1)} MB`);
     if (job.state === "complete")
@@ -371,12 +443,14 @@ document.querySelectorAll('[name="kind"]').forEach((input) =>
 $("paste").addEventListener("click", async () => {
   try {
     $("url").value = (await navigator.clipboard.readText()).trim();
+    updateSource();
     $("url").focus();
   } catch {
     showError("clipboard");
     $("url").focus();
   }
 });
+$("url").addEventListener("input", updateSource);
 $("download-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (submitting) return;

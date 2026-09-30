@@ -121,3 +121,24 @@ async def test_restart_cleans_orphans_and_preserves_completed_media(settings: Se
         assert not (settings.data_dir / "media" / ("a" * 32)).exists()
     finally:
         await runner.stop()
+
+
+@pytest.mark.parametrize("error", ["playlist_unsupported", "link_unresolved", "audio_unavailable"])
+async def test_social_failures_remain_actionable_and_remove_partial_files(
+    settings, monkeypatch, error
+):
+    store = Store(settings)
+    runner = Runner(store, settings)
+    script = (
+        "import json,pathlib; pathlib.Path('media.part').write_bytes(b'partial'); "
+        f"print(json.dumps({{'event':'error','code':{error!r}}})); raise SystemExit(1)"
+    )
+    monkeypatch.setattr(runner, "command", lambda _: [sys.executable, "-c", script])
+    await runner.start()
+    try:
+        job = store.create("alice", "ip", "https://www.instagram.com/reel/Abc_123/", "mp4", 720)
+        result = await wait_state(store, job["id"], "failed")
+        assert result["error"] == error
+        assert not runner.files.folder(job["id"]).exists()
+    finally:
+        await runner.stop()
