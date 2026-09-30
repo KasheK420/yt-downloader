@@ -1,0 +1,41 @@
+services:
+  downloader:
+    build: .
+    image: yt-downloader:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8000"
+    environment:
+      YTD_DATA_DIR: /data
+      YTD_ALLOWED_HOSTS: ${YTD_ALLOWED_HOSTS:-["localhost","127.0.0.1","[::1]"]}
+      YTD_SECURE_COOKIES: ${YTD_SECURE_COOKIES:-false}
+      YTD_MAX_ACTIVE_PER_SESSION: ${YTD_MAX_ACTIVE_PER_SESSION:-2}
+      YTD_MAX_QUEUE: ${YTD_MAX_QUEUE:-12}
+      YTD_RATE_LIMIT: ${YTD_RATE_LIMIT:-5}
+      YTD_RATE_WINDOW_SECONDS: ${YTD_RATE_WINDOW_SECONDS:-600}
+      YTD_MAX_DURATION_SECONDS: ${YTD_MAX_DURATION_SECONDS:-7200}
+      YTD_MAX_FILE_BYTES: ${YTD_MAX_FILE_BYTES:-524288000}
+      YTD_MAX_JOB_BYTES: ${YTD_MAX_JOB_BYTES:-1073741824}
+      YTD_MAX_STORAGE_BYTES: ${YTD_MAX_STORAGE_BYTES:-5368709120}
+      YTD_JOB_TIMEOUT_SECONDS: ${YTD_JOB_TIMEOUT_SECONDS:-1800}
+      YTD_RETENTION_SECONDS: ${YTD_RETENTION_SECONDS:-3600}
+    volumes:
+      - downloader-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.5
+    stop_grace_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  downloader-data:

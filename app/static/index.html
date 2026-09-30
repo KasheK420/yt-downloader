@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A simple, self-hosted YouTube video and MP3 downloader."
+    />
+    <meta name="color-scheme" content="light" />
+    <title>yt-downloader · Video & MP3</title>
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#download-form" data-i18n="skip">Přejít ke stažení</a>
+    <header class="header shell">
+      <a class="brand" href="/" aria-label="yt-downloader home">
+        <span class="brand-mark" aria-hidden="true"
+          ><svg viewBox="0 0 24 24"><path d="M9 6v12l10-6z" /></svg
+        ></span>
+        <span>yt<span class="brand-light">downloader</span></span>
+      </a>
+      <div class="header-actions">
+        <a
+          class="source-link"
+          href="https://github.com/KasheK420/yt-downloader"
+          target="_blank"
+          rel="noopener noreferrer"
+          >GitHub</a
+        >
+        <label class="sr-only" for="language">Jazyk / Language</label>
+        <select id="language" class="language">
+          <option value="cs">Čeština</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div class="intro">
+        <h1 data-i18n="headline">Tvoje videa.<br />Teď i offline.</h1>
+        <p data-i18n="intro">
+          Vlož odkaz z YouTube. Vyber video nebo jen zvuk. Zbytek nech na nás.
+        </p>
+      </div>
+      <div class="workspace">
+        <section class="composer" aria-labelledby="composer-title">
+          <h2 id="composer-title" data-i18n="newDownload">Nové stažení</h2>
+          <form id="download-form">
+            <label class="field-label" for="url" data-i18n="linkLabel"
+              >Odkaz na YouTube</label
+            >
+            <div class="url-field">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="m10 13 4-4m-6 7-1 1a4.2 4.2 0 0 1-6-6l4-4a4.2 4.2 0 0 1 6 0m2 1 1-1a4.2 4.2 0 0 1 6 6l-4 4a4.2 4.2 0 0 1-6 0"
+                />
+              </svg>
+              <input
+                id="url"
+                name="url"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=…"
+                required
+                maxlength="2048"
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="link-help"
+              />
+              <button id="paste" class="paste" type="button" data-i18n="paste">
+                Vložit
+              </button>
+            </div>
+            <p class="field-help" id="link-help" data-i18n="linkHelp">
+              Fungují i odkazy youtu.be a Shorts.
+            </p>
+
+            <fieldset class="format-field">
+              <legend class="field-label" data-i18n="formatLabel">
+                Co chceš stáhnout?
+              </legend>
+              <div class="formats">
+                <label class="format-option">
+                  <input type="radio" name="kind" value="mp4" checked />
+                  <span class="format-content"
+                    ><svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="14" rx="3" />
+                      <path d="m10 9 5 3-5 3z" /></svg
+                    ><span
+                      ><strong data-i18n="videoLabel">Video MP4</strong
+                      ><small data-i18n="videoHint">Obraz i zvuk</small></span
+                    ><span class="radio-dot"></span
+                  ></span>
+                </label>
+                <label class="format-option">
+                  <input type="radio" name="kind" value="mp3" />
+                  <span class="format-content"
+                    ><svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 17V5l11-2v12M9 8l11-2" />
+                      <ellipse cx="6" cy="18" rx="3" ry="2.5" />
+                      <ellipse cx="17" cy="16" rx="3" ry="2.5" /></svg
+                    ><span
+                      ><strong data-i18n="audioLabel">Audio MP3</strong
+                      ><small data-i18n="audioHint"
+                        >Jen zvuková stopa</small
+                      ></span
+                    ><span class="radio-dot"></span
+                  ></span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="quality-row">
+              <div>
+                <label
+                  class="field-label"
+                  for="quality"
+                  data-i18n="qualityLabel"
+                  >Kvalita</label
+                >
+                <p class="field-help" data-i18n="qualityHelp">
+                  Podle dostupnosti původního videa.
+                </p>
+              </div>
+              <select id="quality" name="quality">
+                <option value="360">360p</option>
+                <option value="720" selected>720p</option>
+                <option value="1080">1080p</option>
+              </select>
+            </div>
+            <div
+              id="form-error"
+              class="message error"
+              role="alert"
+              hidden
+            ></div>
+            <div
+              id="runtime-notice"
+              class="message notice"
+              role="status"
+              hidden
+              data-i18n="runtimeUnavailable"
+            >
+              Server ještě není připravený ke stahování.
+            </div>
+            <button id="submit" class="primary" type="submit" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" /></svg
+              ><span data-i18n="submit">Připravit ke stažení</span>
+            </button>
+            <p class="limits" id="limits"></p>
+          </form>
+        </section>
+
+        <section class="downloads" aria-labelledby="downloads-title">
+          <div class="section-heading">
+            <h2 id="downloads-title" data-i18n="downloads">Tvoje soubory</h2>
+            <span id="job-count" class="count">0</span>
+          </div>
+          <p class="section-description" data-i18n="sessionNote">
+            Viditelné jen v tomto prohlížeči.
+          </p>
+          <div
+            id="connection-notice"
+            class="message notice"
+            role="status"
+            hidden
+            data-i18n="connectionError"
+          >
+            Spojení se přerušilo. Zkoušíme to znovu…
+          </div>
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 80 64">
+                <rect x="5" y="17" width="48" height="36" rx="6" />
+                <path d="m24 28 13 7-13 7z" />
+                <path d="M55 10v31m0-26 17-3v26" />
+                <ellipse cx="50" cy="43" rx="5" ry="4" />
+                <ellipse cx="67" cy="40" rx="5" ry="4" />
+              </svg>
+            </div>
+            <h3 data-i18n="emptyTitle">Tady budou tvoje soubory</h3>
+            <p data-i18n="emptyText">
+              Začni odkazem. Hotové video nebo MP3 si pak stáhneš jedním
+              kliknutím.
+            </p>
+          </div>
+          <div id="jobs" class="jobs"></div>
+          <p class="retention" id="retention"></p>
+          <span
+            class="sr-only"
+            id="queue-announcement"
+            role="status"
+            aria-live="polite"
+          ></span>
+        </section>
+      </div>
+      <p class="usage-note" data-i18n="usage">
+        Stahuj obsah, který vlastníš nebo k jehož stažení máš svolení.
+      </p>
+    </main>
+    <footer class="shell footer">
+      <span data-i18n="footer">Jeden odkaz. Tvůj soubor.</span
+      ><span>yt-downloader <span class="version">v0.1.0</span></span>
+    </footer>
+  </body>
+</html>

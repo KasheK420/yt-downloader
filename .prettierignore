@@ -1,0 +1,9 @@
+.venv/
+.local/
+.data/
+node_modules/
+uv.lock
+package-lock.json
+playwright-report/
+test-results/
+coverage.xml

@@ -1,0 +1,27 @@
+# Optional public reverse-proxy override. Requires recent Docker Compose v2 with !reset.
+# Set PUBLIC_HOST and TRUSTED_PROXY_IP in the operator's .env first.
+services:
+  downloader:
+    ports: !reset []
+    networks: [proxy-net]
+    environment:
+      YTD_ALLOWED_HOSTS: '["localhost","127.0.0.1","${PUBLIC_HOST:?Set PUBLIC_HOST}"]'
+      YTD_SECURE_COOKIES: 'true'
+    command:
+      - uvicorn
+      - app.main:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8000'
+      - --workers
+      - '1'
+      - --no-access-log
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - ${TRUSTED_PROXY_IP:?Set TRUSTED_PROXY_IP to the immediate proxy IP}
+
+networks:
+  proxy-net:
+    external: true
