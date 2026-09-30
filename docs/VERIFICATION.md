@@ -45,7 +45,10 @@ The initial bootstrap commit `d937115` passed [CI run 36750311046](https://githu
 the full Linux suite including symlink verification, dependency audits, browser tests,
 and a real Docker build/start/readiness smoke. Both languages passed
 [CodeQL run 36750311047](https://github.com/KasheK420/yt-downloader/actions/runs/36750311047).
-Three additional worker-policy regression cases cover excessive/missing duration and live media.
+Commit `52d85de` passed [CI run 36751095078](https://github.com/KasheK420/yt-downloader/actions/runs/36751095078)
+with **53 backend tests and 8 browser tests**, including three worker-policy regression cases for
+excessive/missing duration and live media. Its
+[CodeQL run](https://github.com/KasheK420/yt-downloader/actions/runs/36751095306) also passed.
 Consult [the latest workflow runs](https://github.com/KasheK420/yt-downloader/actions) for the
 actual commit's results. A workflow definition alone is not evidence of a passing run.
 
