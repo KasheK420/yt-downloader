@@ -2,7 +2,7 @@
 
 ## v0.3.0 workflow and accounts - 2026-09-30
 
-Local Windows checks: **188 backend tests passed**, one Windows symlink-privilege skip;
+Local Windows checks: **191 backend tests passed**, one Windows symlink-privilege skip;
 **36 desktop/mobile browser tests passed**. Application coverage: 91% with the same worker
 exclusion described below. Ruff lint/format, mypy, Prettier and Compose configuration passed.
 Python and npm dependency audits reported no known vulnerabilities. Screenshots of the
@@ -14,7 +14,8 @@ legacy guest-session migration, unavailable worker rejection, owned Range/HEAD p
 live response leases during cleanup, locked-file retry and cleanup during a busy worker.
 Child-process tests prove OAuth and unrelated credentials are excluded from their environment.
 
-Account tests cover session rotation, guest-job/usage migration, all-device logout, deletion,
+Account tests cover session rotation, fixed expiry without cookie reflection or renewal,
+guest-job/usage migration, all-device logout, deletion,
 callback replay, missing browser binding, provider mismatch, expired state, cancelled consent,
 timeouts and sanitized errors. Google protocol fixtures exchange a code with PKCE and verify
 real RSA-signed JWTs, including invalid signature/algorithm/issuer/audience/nonce/expiry/azp.

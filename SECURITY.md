@@ -46,7 +46,7 @@ Stored data consists of canonical video URL, format, quality, title, job state/t
 temporary media, an owner identifier, and a short-lived keyed hash of the peer address.
 Optional accounts store provider, pseudonymous subject and display name; session tokens are hashed.
 Terminal jobs/files expire after one hour by default. Quota and idempotency records expire after
-the longest configured budget window, at least 24 hours. Session expiry is 7 days after renewal;
+the longest configured budget window, at least 24 hours. Sessions expire 7 days after creation/sign-in;
 OAuth transactions last 10 minutes. Cleanup metadata survives a failed file deletion until retry.
 No analytics, remote fonts, thumbnails, passwords or third-party frontend scripts are used.
 Outgoing media requests go to the selected provider (YouTube, Facebook, or Instagram) and its

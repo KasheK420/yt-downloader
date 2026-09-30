@@ -81,13 +81,6 @@ class Accounts:
             )
         return token
 
-    def refresh(self, token: str) -> None:
-        with self.store._db() as db:
-            db.execute(
-                "UPDATE sessions SET expires_at = ? WHERE token_hash = ? AND expires_at > ?",
-                (time.time() + SESSION_TTL, digest(token), time.time()),
-            )
-
     def begin(self, token: str, provider: str) -> tuple[str, str, str, str]:
         state, binding = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
         verifier, nonce = secrets.token_urlsafe(48), secrets.token_urlsafe(32)

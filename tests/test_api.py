@@ -120,11 +120,36 @@ def test_refuses_oversized_body_and_foreign_host(client: TestClient) -> None:
 
 
 def test_session_cookie_and_security_headers(client: TestClient) -> None:
+    client.cookies.clear()
     result = client.get("/api/session")
     assert result.status_code == 200
     assert "httponly" in result.headers["set-cookie"].lower()
     assert "samesite=strict" in result.headers["set-cookie"].lower()
     assert "default-src 'self'" in result.headers["content-security-policy"]
+
+
+def test_reading_session_never_reissues_cookie_or_extends_expiry(client, monkeypatch):
+    accounts = client.app.state.accounts
+    token = client.cookies.get("ytd_session")
+    expires_at = accounts.session(token)["expires_at"]
+    monkeypatch.setattr("app.accounts.time.time", lambda: expires_at - 1)
+    result = client.get("/api/session")
+    assert result.status_code == 200
+    assert "set-cookie" not in result.headers
+    assert accounts.session(token)["expires_at"] == expires_at
+
+
+def test_expired_session_requires_a_new_server_generated_cookie(client, monkeypatch):
+    accounts = client.app.state.accounts
+    old_token = client.cookies.get("ytd_session")
+    expires_at = accounts.session(old_token)["expires_at"]
+    monkeypatch.setattr("app.accounts.time.time", lambda: expires_at + 1)
+    assert client.get("/api/jobs").status_code == 401
+    response = client.get("/api/session")
+    assert response.status_code == 200
+    new_token = client.cookies.get("ytd_session")
+    assert new_token != old_token and accounts.session(old_token) is None
+    assert accounts.session(new_token)["account_id"] is None
 
 
 def test_missing_file_is_reported_as_gone(client: TestClient) -> None:

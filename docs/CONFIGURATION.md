@@ -44,13 +44,13 @@ it always uses `/data` inside the container and the bundled FFmpeg/Node executab
 Public guests get at most one active job, free accounts at most two, both capped by
 `YTD_MAX_ACTIVE_PER_SESSION`. Guest/free windows are configurable up to 7 days. Pseudonymous
 quota/idempotency records are retained for the longest configured window, at least 24 hours,
-then pruned by maintenance. Session hashes last up to 7 days after renewal; login state lasts
+then pruned by maintenance. Sessions expire 7 days after creation/sign-in; login state lasts
 10 minutes. Empty optional OAuth environment values are treated as unset. Supplying only
 part of a provider configuration fails startup. HTTPS origins require Secure cookies.
 See [AUTHENTICATION.md](AUTHENTICATION.md) for callback setup and [LIMITS.md](LIMITS.md) for policy.
 
 Configuration requires positive limits and `max_file_bytes <= max_job_bytes <= max_storage_bytes`.
-The session cookie is renewed for 7 days; media expires much sooner. Keep localhost in allowed
+The session cookie has a fixed 7-day lifetime; media expires much sooner. Keep localhost in allowed
 hosts for container health checks when adding a public hostname. Never use a wildcard host on
 a public instance. Job filenames/paths and raw yt-dlp options are not configurable by visitors.
 

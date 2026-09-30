@@ -227,12 +227,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     legacy = value
             except BadSignature:
                 pass
-            token = accounts.new_guest(client_key(request), legacy)
-            current = accounts.session(token)
-        else:
-            accounts.refresh(token)
+            new_token = accounts.new_guest(client_key(request), legacy)
+            current = accounts.session(new_token)
+            cookie(response, new_token)
         assert current
-        cookie(response, token)
         policy = policy_for(settings, bool(current["account_id"]))
         return {
             **asdict(policy),

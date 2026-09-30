@@ -54,7 +54,8 @@ The default remains guest access plus optional sign-in.
   10-minute expiry. State, verifier and nonce are server-side. Callback replay, provider
   mismatch, missing binding, cancelled consent, timeout and revoked sessions fail closed.
 - Local session cookies are opaque random tokens, HttpOnly and SameSite=Strict. Only their
-  hashes are stored. A session lasts 7 days after renewal and is revoked on logout.
+  hashes are stored. A session lasts a fixed 7 days from creation/sign-in and is revoked on
+  logout. Reading session metadata does not reissue the cookie or extend its expiry.
 - Login rotates the guest session and atomically transfers its jobs and quota usage to the
   account. Separate sign-ins from another device reach the same owned library.
 - Identity is provider plus subject. Google and Facebook are separate accounts even if

@@ -27,7 +27,8 @@ The future public service supports guests with optional free accounts. Before la
 2. Verify real provider downloads from the chosen host, concurrent visitors, lifecycle/expiry,
    filesystem quota behavior, and operational alerts.
 3. Record a rollback and incident procedure for provider breakage or abusive traffic.
-4. Register operator-owned Google/Meta applications, set exact callback/consent/privacy details,
+4. [Activate optional sign-in](https://github.com/KasheK420/yt-downloader/issues/15): register
+   operator-owned Google/Meta applications, set exact callback/consent/privacy details,
    and prove login/logout/deletion with real accounts if optional sign-in is enabled.
 
 These are deployment acceptance tasks, not missing basic downloader functionality. They are
