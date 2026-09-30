@@ -3,13 +3,15 @@
 Same-origin, session-cookie API with optional social accounts. No CORS. Responses use `no-store`.
 Call `GET /api/session` and preserve the `ytd_session` HttpOnly cookie before using job routes.
 POST and DELETE require `X-Requested-With: yt-downloader`. JSON request bodies are capped at 4 KiB.
+Session metadata reads set a cookie only when creating a new guest session. Existing sessions
+keep their fixed 7-day expiry; successful sign-in replaces the guest token with a new token.
 
 | Method     | Path                  | Result                                                                      |
 | ---------- | --------------------- | --------------------------------------------------------------------------- |
 | GET        | `/healthz`            | Process liveness                                                            |
-| GET        | `/readyz`             | 200 if worker, FFmpeg, ffprobe, and JS runtime are available; otherwise 503 |
-| GET        | `/api/session`        | Cookie plus duration/file/retention limits and readiness                    |
-| GET        | `/api/jobs`           | Up to 50 unexpired jobs for this browser, newest first                      |
+| GET        | `/readyz`             | 200 if worker, maintenance, FFmpeg, ffprobe, and JS runtime are available; otherwise 503 |
+| GET        | `/api/session`        | Session/account, limits, readiness; new guest cookie when needed            |
+| GET        | `/api/jobs`           | Up to 50 unexpired jobs owned by this guest/account, newest first           |
 | POST       | `/api/jobs`           | 202 and a queued job                                                        |
 | GET        | `/api/jobs/{id}`      | Owned job status                                                            |
 | DELETE     | `/api/jobs/{id}`      | Active: cancel and return job (200). Terminal: expire/remove it (204) |
