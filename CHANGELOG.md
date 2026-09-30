@@ -2,6 +2,19 @@
 
 Changes follow Semantic Versioning. Release publication is explicit through the Release workflow.
 
+## 0.3.0 - 2026-09-30
+
+- Add optional Google/Facebook accounts with browser-bound code flows, revocable sessions,
+  guest-library migration, all-device logout and account deletion. Provider setup is required.
+- Add configurable public guest/free budgets, per-job resource snapshots, accurate rolling
+  allowance reporting and idempotent job admission. Guest access remains the default.
+- Add retry, early removal, owned Range-capable previews, library filters and preference storage.
+- Recover expired sessions and network interruptions without recreating players or duplicate jobs.
+- Run maintenance independently of downloads, preserve cleanup metadata on file-lock failures,
+  protect accepted streams during removal, and expire jobs that wait too long in the queue.
+- Isolate OAuth secrets from downloader child environments and expand protocol/lifecycle tests.
+- Document OAuth activation, free access policies, privacy and hosted-acceptance boundaries.
+
 ## 0.2.0 - 2026-09-30
 
 - Add Facebook video/Reel and Instagram Reel/single-video post downloads to MP4 and MP3.

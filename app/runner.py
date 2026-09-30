@@ -6,6 +6,7 @@ import os
 import signal
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -28,24 +29,37 @@ class Runner:
         self.settings = settings
         self.files = MediaFiles(settings.data_dir)
         self.task: asyncio.Task[None] | None = None
+        self.maintenance_task: asyncio.Task[None] | None = None
         self.current_task: asyncio.Task[None] | None = None
         self.process: asyncio.subprocess.Process | None = None
         self.active_id: str | None = None
         self.lock = FileLock(settings.data_dir / "runner.lock", thread_local=False)
+        self.prune_accounts: Callable[[], None] = lambda: None
 
     async def start(self) -> None:
         self.lock.acquire(timeout=0)
         try:
             self.store.recover()
-            for job_id in self.store.expire():
-                self.files.remove(job_id)
-            self.files.clean_orphans(self.store.retained_ids())
+            self.cleanup()
+            self.maintenance_task = asyncio.create_task(self._maintenance())
             self.task = asyncio.create_task(self._loop())
         except BaseException:
             self.lock.release()
             raise
 
+    def available(self) -> bool:
+        return bool(
+            self.task
+            and not self.task.done()
+            and self.maintenance_task
+            and not self.maintenance_task.done()
+        )
+
     async def stop(self) -> None:
+        if self.maintenance_task:
+            self.maintenance_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self.maintenance_task
         if self.task:
             self.task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -58,7 +72,35 @@ class Runner:
             self.current_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self.current_task
-        self.files.remove(job_id)
+        self._remove_files(job_id)
+
+    def _remove_files(self, job_id: str) -> bool:
+        try:
+            self.files.remove(job_id)
+            return True
+        except BlockingIOError:
+            return False
+        except (OSError, ValueError):
+            logger.warning("Media cleanup deferred for job %s", job_id)
+            return False
+
+    def cleanup(self) -> None:
+        self.store.expire_queue()
+        self.store.prune_counters()
+        self.prune_accounts()
+        for job_id in self.store.cleanup_ids():
+            # Cancellation is visible before its child has fully stopped.
+            if job_id != self.active_id and self._remove_files(job_id):
+                self.store.purge(job_id)
+        self.files.clean_orphans(self.store.retained_ids())
+
+    async def _maintenance(self) -> None:
+        while True:
+            await asyncio.sleep(self.settings.cleanup_interval_seconds)
+            try:
+                self.cleanup()
+            except Exception:
+                logger.exception("Media maintenance failed; retrying next interval")
 
     def command(self, job: dict[str, Any]) -> list[str]:
         args = [
@@ -72,9 +114,9 @@ class Runner:
             "--quality",
             str(job["quality"]),
             "--max-duration",
-            str(self.settings.max_duration_seconds),
+            str(job.get("max_duration_seconds") or self.settings.max_duration_seconds),
             "--max-file-bytes",
-            str(self.settings.max_file_bytes),
+            str(job.get("max_file_bytes") or self.settings.max_file_bytes),
             "--js-runtime",
             self.settings.js_runtime,
         ]
@@ -85,8 +127,6 @@ class Runner:
     async def _loop(self) -> None:
         while True:
             try:
-                for job_id in self.store.expire():
-                    self.files.remove(job_id)
                 job = self.store.claim()
                 if job:
                     self.active_id = job["id"]
@@ -183,9 +223,34 @@ class Runner:
                 raise JobFailure("storage_full")
             self.files.folder(job_id).mkdir()
             env = {
-                **os.environ,
+                **{
+                    key: value
+                    for key, value in os.environ.items()
+                    if key.upper()
+                    in {
+                        "PATH",
+                        "SYSTEMROOT",
+                        "WINDIR",
+                        "COMSPEC",
+                        "PATHEXT",
+                        "TEMP",
+                        "TMP",
+                        "TMPDIR",
+                        "HOME",
+                        "USERPROFILE",
+                        "LOCALAPPDATA",
+                        "APPDATA",
+                        "LANG",
+                        "LC_ALL",
+                        "SSL_CERT_FILE",
+                        "SSL_CERT_DIR",
+                        "REQUESTS_CA_BUNDLE",
+                    }
+                },
                 "PYTHONPATH": str(Path(__file__).resolve().parent.parent),
                 "PYTHONUTF8": "1",
+                "PYTHONUNBUFFERED": "1",
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
             spawn = asyncio.create_task(
                 asyncio.create_subprocess_exec(
@@ -221,7 +286,7 @@ class Runner:
             output = self.files.output(job_id, job["kind"])
             if not output.is_file() or output.stat().st_size == 0:
                 raise JobFailure("provider_error")
-            if output.stat().st_size > self.settings.max_file_bytes:
+            if output.stat().st_size > (job.get("max_file_bytes") or self.settings.max_file_bytes):
                 raise JobFailure("size_limit")
             output_size = output.stat().st_size
             succeeded = True
@@ -239,10 +304,10 @@ class Runner:
             if reader:
                 if not reader.done():
                     reader.cancel()
-                with contextlib.suppress(asyncio.CancelledError, ValueError):
+                with contextlib.suppress(asyncio.CancelledError, Exception):
                     await reader
             if not succeeded:
-                self.files.remove(job_id)
                 self.store.update(job_id, state="failed", error=failure or "processing_error")
+                self._remove_files(job_id)
             else:
                 self.store.update(job_id, state="complete", progress=100, file_bytes=output_size)

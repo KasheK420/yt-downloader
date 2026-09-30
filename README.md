@@ -6,9 +6,10 @@
 
 A self-hosted web app that turns a **YouTube, Facebook, or Instagram** link into an
 **MP4 video** or **MP3 audio file**.
-Paste a link, choose the format and quality, and download the result. No account required.
+Paste a link, choose the format and quality, preview it, and download the result.
+Guest access works out of the box; optional Google/Facebook sign-in adds an account library.
 
-![Czech desktop interface](docs/images/desktop.png)
+![Desktop interface with synthetic example jobs](docs/images/desktop.png)
 
 ## Features
 
@@ -17,9 +18,12 @@ Paste a link, choose the format and quality, and download the result. No account
 - Facebook videos and Reels; Instagram Reels and single-video posts.
 - Bounded share-link resolution and automatic provider identification.
 - Portrait-aware quality limits: keep the orientation and never upscale the source.
-- Queue, progress, cancellation, clear failures, and automatic file expiry.
+- Queue, progress, cancellation, retry, inline playback, early deletion, and automatic expiry.
+- Stable job cards, library filters, remembered format/quality and connection recovery.
+- Optional Google/Facebook accounts with logout, all-device logout and account deletion.
+- Public guest/free budgets, remaining allowance, rolling reset times and server-side enforcement.
 - Czech and English UI, responsive layout, keyboard navigation, and no analytics.
-- Anonymous browser sessions isolate jobs and downloads between visitors.
+- Revocable browser sessions isolate jobs and downloads between visitors and accounts.
 - Rate, queue, duration, storage, and execution-time limits.
 - Single Docker service with Python, yt-dlp, FFmpeg, and Node.js included.
 
@@ -102,7 +106,10 @@ never contacts those providers. See the dated
 This release is intended for a private installation first. Public operation without login
 is supported by the application model but requires the deployment steps in
 [DEPLOYMENT.md](docs/DEPLOYMENT.md), including HTTPS, edge limits, and trusted proxy configuration.
-There is no live public service deployed by this repository bootstrap.
+There is no live public service deployed by this repository bootstrap. The public proxy
+example enables guest/free budgets; see [limits and failure cases](docs/LIMITS.md).
+Google/Facebook login requires your own OAuth application credentials and exact callback
+origin. It is hidden until configured. Follow [authentication setup](docs/AUTHENTICATION.md).
 
 Provider changes can break extraction independently of this application. Dependabot proposes
 dependency updates; keep the lockfile reviewed and rerun a live smoke after upgrading yt-dlp.
@@ -116,6 +123,8 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Architecture](docs/ARCHITECTURE.md)   | Modules, flow, lifecycle, and resource controls        |
 | [Configuration](docs/CONFIGURATION.md) | Every environment variable and default                 |
 | [API](docs/API.md)                     | Session, job, and file endpoints                       |
+| [Authentication](docs/AUTHENTICATION.md) | Optional Google/Facebook setup and account lifecycle |
+| [Limits and edge cases](docs/LIMITS.md) | Guest/free policies, quotas and failure behavior |
 | [Sources](docs/SOURCES.md)             | Supported links, provider behavior, and limits         |
 | [Deployment](docs/DEPLOYMENT.md)       | Private setup, public launch, proxying, and operations |
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |

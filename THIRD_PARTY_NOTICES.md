@@ -12,6 +12,10 @@ container components retain their own licenses, notices, and distribution obliga
 | FastAPI    | https://github.com/fastapi/fastapi/blob/master/LICENSE                                |
 | Starlette  | https://github.com/Kludex/starlette/blob/main/LICENSE.md                              |
 | Uvicorn    | https://github.com/Kludex/uvicorn/blob/main/LICENSE.md                                |
+| Authlib | https://github.com/authlib/authlib/blob/main/LICENSE ; BSD 3-Clause |
+| joserfc | https://github.com/authlib/joserfc ; bundled license applies |
+| cryptography | https://github.com/pyca/cryptography ; bundled Apache/BSD notices apply |
+| httpx2 | https://github.com/pydantic/httpx2 ; bundled license applies |
 | Python     | https://docs.python.org/3/license.html                                                |
 | Node.js    | https://github.com/nodejs/node/blob/main/LICENSE                                      |
 | uv         | https://github.com/astral-sh/uv                                                       |

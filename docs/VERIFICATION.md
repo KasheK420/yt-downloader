@@ -1,5 +1,41 @@
 # Verification evidence
 
+## v0.3.0 workflow and accounts - 2026-09-30
+
+Local Windows checks: **191 backend tests passed**, one Windows symlink-privilege skip;
+**36 desktop/mobile browser tests passed**. Application coverage: 91% with the same worker
+exclusion described below. Ruff lint/format, mypy, Prettier and Compose configuration passed.
+Python and npm dependency audits reported no known vulnerabilities. Screenshots of the
+populated library and account dialog were inspected; they contain synthetic examples only.
+
+New evidence covers atomic guest/account budgets, concurrent admissions, cookie reset,
+history removal, account deletion/re-registration, job limit snapshots, idempotent requests,
+legacy guest-session migration, unavailable worker rejection, owned Range/HEAD previews,
+live response leases during cleanup, locked-file retry and cleanup during a busy worker.
+Child-process tests prove OAuth and unrelated credentials are excluded from their environment.
+
+Account tests cover session rotation, fixed expiry without cookie reflection or renewal,
+guest-job/usage migration, all-device logout, deletion,
+callback replay, missing browser binding, provider mismatch, expired state, cancelled consent,
+timeouts and sanitized errors. Google protocol fixtures exchange a code with PKCE and verify
+real RSA-signed JWTs, including invalid signature/algorithm/issuer/audience/nonce/expiry/azp.
+Facebook fixtures verify app, subject, token type and both expirations. These are **offline
+protocol fixtures, not real Google/Facebook account acceptance**.
+
+Browser cases cover retries, early-deletion confirmation, preview-node/focus preservation,
+expired-session recovery, lost POST responses, preferences without saved source URLs, account
+logout and displayed limits. Initial, failure/help, populated and account-dialog states had no
+serious/critical axe findings. Provider OAuth credentials and a public callback hostname are
+not configured. No public deployment or live social sign-in is claimed.
+
+The v0.2 provider evidence below remains dated evidence. Extraction was not upgraded in v0.3.
+An additional v0.3 live check through the actual API/session/runner/worker/file path succeeded
+for Facebook `watch/?v=106560053808006`: MP4 95,280 bytes (H.264/AAC, 224 x 400) and MP3
+79,973 bytes. ffprobe verified both and all temporary media was removed. An initial incomplete
+`/videos/{id}/` input was rejected as invalid; the supported watch URL above was used.
+The full Linux suite and actual Docker build/start are checked in GitHub CI; consult the PR
+and main workflow runs for their exact commit rather than treating local tests as hosted proof.
+
 ## v0.2.0 local checks - 2026-09-30
 
 Environment: Windows, Python 3.13.15, Node 24.21.0, yt-dlp 2026.8.19 with curl-cffi 0.16.3,

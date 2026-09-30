@@ -7,6 +7,8 @@ services:
     environment:
       YTD_ALLOWED_HOSTS: '["localhost","127.0.0.1","${PUBLIC_HOST:?Set PUBLIC_HOST}"]'
       YTD_SECURE_COOKIES: 'true'
+      YTD_PUBLIC_MODE: 'true'
+      YTD_PUBLIC_ORIGIN: 'https://${PUBLIC_HOST:?Set PUBLIC_HOST}'
     command:
       - uvicorn
       - app.main:create_app

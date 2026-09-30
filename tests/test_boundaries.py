@@ -61,6 +61,7 @@ async def test_chunked_request_limit_does_not_call_application():
 @pytest.mark.asyncio
 async def test_expiry_removes_media_and_database_rows(settings: Settings):
     settings.retention_seconds = 1
+    settings.cleanup_interval_seconds = 0.1
     store = Store(settings)
     job = store.create("alice", "ip", "https://www.youtube.com/watch?v=BaW_jenozKc", "mp3", 192)
     store.update(job["id"], state="complete")

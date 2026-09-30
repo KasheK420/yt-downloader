@@ -27,3 +27,7 @@ and pull requests in English. The UI supports Czech and English.
 - Deployment defaults to localhost. Public exposure is a separate operator action described
   in docs/DEPLOYMENT.md. Do not change production infrastructure without task authorization.
 - Keep provider requests out of normal CI; live smoke testing is an explicit local command.
+- Keep social-login tokens transient and OAuth credentials out of downloader children. Tests
+  must validate state binding, token claims, revocation, ownership and quota continuity.
+- Guest access stays available by default. Live provider-console setup and public deployment
+  need explicit host-specific acceptance; offline OAuth fixtures do not prove real sign-in.

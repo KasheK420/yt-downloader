@@ -68,7 +68,7 @@ summary:focus-visible {
   padding: 0 40px;
 }
 .header {
-  height: 104px;
+  height: 84px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -102,7 +102,7 @@ summary:focus-visible {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 18px;
   font-size: 14px;
 }
 .source-link:hover {
@@ -116,7 +116,7 @@ summary:focus-visible {
   max-width: 110px;
 }
 .intro {
-  padding: 43px 0 40px;
+  padding: 25px 0 30px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -124,7 +124,7 @@ summary:focus-visible {
 }
 .intro h1 {
   white-space: pre-line;
-  font-size: 62px;
+  font-size: 48px;
   line-height: 1.04;
   letter-spacing: -2.8px;
   font-weight: 650;
@@ -139,7 +139,7 @@ summary:focus-visible {
 }
 .workspace {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -653,7 +653,7 @@ summary:focus-visible {
   }
   .intro h1 {
     white-space: pre-line;
-    font-size: 54px;
+    font-size: 46px;
   }
   .downloads {
     padding-left: 0;
@@ -675,14 +675,14 @@ summary:focus-visible {
   }
   .intro h1 {
     white-space: pre-line;
-    font-size: 49px;
+    font-size: 43px;
     letter-spacing: -2px;
   }
   .intro p {
     max-width: 340px;
     font-size: 15px;
     line-height: 1.6;
-    margin-top: 20px;
+    margin-top: 14px;
   }
   .workspace {
     grid-template-columns: 1fr;
@@ -743,5 +743,267 @@ summary:focus-visible {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+.account-trigger {
+  background: #e6edfd;
+  color: #284fbd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.budget {
+  padding: 15px 16px;
+  margin-top: 18px;
+  background: #f4f7fd;
+  border-radius: 10px;
+  border: 1px solid #e1e8f4;
+}
+.budget > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+.budget p {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 8px 0 0;
+}
+.budget progress {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--blue);
+  display: block;
+  margin: 10px 0 0;
+}
+.job-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 20px 0 0;
+}
+.job-filters button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 13px;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  min-height: 38px;
+}
+.job-filters button[aria-pressed="true"] {
+  color: #254dc1;
+  background: #e7eefc;
+  border-color: #cbd8f3;
+  font-weight: 600;
+}
+.filter-empty {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 36px 10px;
+  text-align: center;
+}
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.job-action {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+}
+.job-actions .cancel {
+  margin-left: auto;
+}
+.job-expiry {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.media-preview {
+  margin-top: 15px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.media-preview video,
+.media-preview audio {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  border-radius: 8px;
+}
+.media-preview video {
+  background: #111b2b;
+}
+#connection-notice button {
+  display: block;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  padding: 8px 0 0;
+  font-size: 12px;
+}
+.job:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+dialog {
+  width: min(540px, calc(100% - 32px));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 26px;
+  color: var(--ink);
+  box-shadow: 0 24px 80px #142b492b;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+dialog::backdrop {
+  background: #142b4973;
+  backdrop-filter: blur(3px);
+}
+dialog h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+dialog p {
+  line-height: 1.65;
+  font-size: 14px;
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dialog-close {
+  font-size: 25px;
+  background: #edf2fb;
+  color: var(--muted);
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+}
+.dialog-actions,
+.account-actions,
+.login-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.dialog-actions {
+  justify-content: flex-end;
+}
+.dialog-actions button,
+.account-actions button,
+.login-button {
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #edf2fb;
+  color: var(--ink);
+  min-height: 42px;
+}
+.login-options {
+  flex-direction: column;
+}
+.login-button {
+  background: white;
+  border: 1px solid #c6d2e7;
+  font-weight: 600;
+}
+.login-button:hover {
+  background: #f3f6fc;
+}
+.danger-text {
+  color: #a3293a !important;
+}
+.danger-button {
+  background: #a3293a !important;
+  color: white !important;
+}
+.plan-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.plan {
+  padding: 15px;
+  background: #f3f6fd;
+  border: 1px solid #dee6f3;
+  border-radius: 10px;
+}
+.plan p,
+.plan small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.plan p {
+  margin: 8px 0;
+}
+.privacy-link {
+  display: inline-block;
+  color: #254dc1;
+  text-decoration: underline;
+  font-size: 13px;
+  margin-top: 18px;
+}
+.privacy-page {
+  max-width: 850px;
+  padding-top: 30px;
+  padding-bottom: 60px;
+  line-height: 1.75;
+}
+.privacy-page h1 {
+  font-size: 38px;
+}
+.privacy-page h2 {
+  font-size: 22px;
+  margin-top: 30px;
+}
+@media (max-width: 720px) {
+  .header {
+    height: auto;
+    min-height: 96px;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-top: 18px;
+    padding-bottom: 10px;
+  }
+  .header-actions {
+    margin-left: auto;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .account-trigger {
+    max-width: 165px;
+  }
+  .intro {
+    padding: 20px 0 24px;
+  }
+  .brand {
+    font-size: 21px;
+  }
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+  }
+  .footer {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+  .job-bottom {
+    align-items: flex-start;
+  }
+  dialog {
+    padding: 22px;
   }
 }
