@@ -17,9 +17,16 @@ pixels, non-AAC audio, compatible H.264/AAC, silent H.264, and damaged frame dat
 container metadata. Checks cover H.264/yuv420p, AAC, unchanged small dimensions, faststart,
 full decode, preserved packet hashes for compatible video and rejection before replacing a
 damaged source. An eighth regression verifies actionable processing errors and partial cleanup.
+The initial Linux run failed `test_mp4_with_readable_metadata_but_broken_frames_is_rejected`:
+the fixture zeroed the NAL header into unspecified type 0, which older FFmpeg can ignore.
+The fixture now preserves the video-slice header and damages its payload, with an independent
+decode assertion proving that the sample is actually undecodable. The revised case was also
+verified to fail against v0.3.0 and pass with the fix; no application check was weakened.
 
 The reported server copy was normalized privately to H.264/AAC at 1280 x 720, with unchanged
 duration and successful full decode. A new live YouTube download of the same source passed
+the checks below. Headless Chromium also played the repaired 720p copy from the beginning and
+after seeking near its end, without a media error. The fresh live download passed
 the application/session/worker/attachment path: 14,477,366 bytes, H.264/AAC at 640 x 360,
 and full decode of the HTTP response bytes. Source URL, title and media remain outside Git.
 The live smoke command now rejects incompatible MP4 codecs and decoding failures.

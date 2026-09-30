@@ -133,9 +133,29 @@ def test_mp4_with_readable_metadata_but_broken_frames_is_rejected(tmp_path, medi
     packet = video_packets(path, media_tools)[-1]
     data = bytearray(path.read_bytes())
     start, size = int(packet["pos"]), int(packet["size"])
-    data[start + 4 : start + size] = b"\0" * (size - 4)
+    # Preserve length and NAL type. Zeroing the NAL header creates unspecified type 0,
+    # which older decoders can ignore instead of treating it as a damaged video slice.
+    data[start + 5 : start + size] = b"\0" * (size - 5)
     path.write_bytes(data)
     assert inspect_media(path, 10, media_tools[2])["format"]["duration"]
+    decoded = subprocess.run(
+        [
+            media_tools[0],
+            "-v",
+            "error",
+            "-xerror",
+            "-err_detect",
+            "explode",
+            "-i",
+            str(path),
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        timeout=30,
+    )
+    assert decoded.returncode != 0, "The fixture must contain an undecodable video slice"
     with pytest.raises(SourceError, match="processing_error"):
         fit_video(path, 720, 10, media_tools[2])
     assert path.read_bytes() == data
