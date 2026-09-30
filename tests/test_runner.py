@@ -142,3 +142,24 @@ async def test_social_failures_remain_actionable_and_remove_partial_files(
         assert not runner.files.folder(job["id"]).exists()
     finally:
         await runner.stop()
+
+
+async def test_worker_does_not_inherit_social_login_credentials(settings, monkeypatch):
+    monkeypatch.setenv("YTD_GOOGLE_CLIENT_SECRET", "synthetic-secret")
+    monkeypatch.setenv("YTD_FACEBOOK_CLIENT_SECRET", "synthetic-secret")
+    monkeypatch.setenv("UNRELATED_PRIVATE_TOKEN", "synthetic-secret")
+    store = Store(settings)
+    runner = Runner(store, settings)
+    script = (
+        "import os,pathlib; "
+        "assert not any(k in os.environ for k in "
+        "['YTD_GOOGLE_CLIENT_SECRET','YTD_FACEBOOK_CLIENT_SECRET','UNRELATED_PRIVATE_TOKEN']); "
+        "pathlib.Path('media.mp4').write_bytes(b'media')"
+    )
+    monkeypatch.setattr(runner, "command", lambda _: [sys.executable, "-c", script])
+    await runner.start()
+    try:
+        job = store.create("alice", "ip", URL, "mp4", 720)
+        await wait_state(store, job["id"], "complete")
+    finally:
+        await runner.stop()

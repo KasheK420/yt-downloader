@@ -18,6 +18,7 @@ def client(settings: Settings, monkeypatch: pytest.MonkeyPatch):
             pass
 
         monkeypatch.setattr(Runner, "start", offline_start)
+        monkeypatch.setattr(Runner, "available", lambda _: True)
         monkeypatch.setattr(
             "app.main.runtime_status", lambda _: {"ffmpeg": True, "ffprobe": True, "node": True}
         )
@@ -40,7 +41,13 @@ def test_create_list_and_owner_isolation(client: TestClient, settings: Settings,
     assert len(client.get("/api/jobs").json()) == 1
     with TestClient(create_app(settings)) as stranger:
         stranger.get("/api/session")
-        for method, suffix in [("GET", ""), ("GET", "/file"), ("DELETE", "")]:
+        for method, suffix in [
+            ("GET", ""),
+            ("GET", "/file"),
+            ("HEAD", "/preview"),
+            ("POST", "/retry"),
+            ("DELETE", ""),
+        ]:
             result = stranger.request(method, f"/api/jobs/{job['id']}{suffix}", headers=HEADERS)
             assert result.status_code == 404
         assert stranger.get("/api/jobs").json() == []
@@ -161,3 +168,67 @@ def test_social_jobs_expose_only_provider_and_keep_canonical_input(
 
 def test_session_reports_supported_providers(client):
     assert client.get("/api/session").json()["providers"] == ["youtube", "facebook", "instagram"]
+
+
+def test_preview_supports_inline_range_requests_and_early_removal(client, settings):
+    job = client.post("/api/jobs", json=PAYLOAD, headers=HEADERS).json()
+    files = client.app.state.runner.files
+    files.folder(job["id"]).mkdir()
+    files.output(job["id"], "mp4").write_bytes(b"0123456789")
+    client.app.state.store.update(job["id"], state="complete")
+    result = client.get(f"/api/jobs/{job['id']}/preview", headers={"Range": "bytes=2-5"})
+    assert result.status_code == 206 and result.content == b"2345"
+    assert result.headers["content-disposition"].startswith("inline;")
+    assert result.headers["content-range"] == "bytes 2-5/10"
+    assert client.head(f"/api/jobs/{job['id']}/file").headers["content-length"] == "10"
+    assert (
+        client.get(f"/api/jobs/{job['id']}/preview", headers={"Range": "bytes=50-60"}).status_code
+        == 416
+    )
+    assert client.delete(f"/api/jobs/{job['id']}", headers=HEADERS).status_code == 204
+    assert client.get(f"/api/jobs/{job['id']}/file").status_code == 404
+    assert client.get("/api/jobs").json() == []
+    assert not files.folder(job["id"]).exists()
+
+
+def test_browser_request_key_prevents_duplicate_jobs(client):
+    headers = {**HEADERS, "Idempotency-Key": "a" * 32}
+    first = client.post("/api/jobs", json=PAYLOAD, headers=headers)
+    second = client.post("/api/jobs", json=PAYLOAD, headers=headers)
+    assert first.json()["id"] == second.json()["id"]
+    assert len(client.get("/api/jobs").json()) == 1
+    assert (
+        client.post("/api/jobs", json={**PAYLOAD, "quality": 360}, headers=headers).status_code
+        == 409
+    )
+
+
+def test_repeated_accepted_request_survives_runtime_outage(client, monkeypatch):
+    headers = {**HEADERS, "Idempotency-Key": "b" * 32}
+    first = client.post("/api/jobs", json=PAYLOAD, headers=headers)
+    monkeypatch.setattr("app.main.runtime_status", lambda _: {"ffmpeg": False})
+    repeated = client.post("/api/jobs", json=PAYLOAD, headers=headers)
+    assert repeated.status_code == 202 and repeated.json()["id"] == first.json()["id"]
+
+
+def test_signed_v02_guest_cookie_migrates_without_losing_jobs(client, settings):
+    from itsdangerous import URLSafeTimedSerializer
+
+    from app.security import signing_secret
+
+    owner = "a" * 32
+    legacy = URLSafeTimedSerializer(signing_secret(settings.data_dir), salt="anonymous-session-v1")
+    job = client.app.state.store.create(owner, "legacy-ip", PAYLOAD["url"], "mp4", 720)
+    client.cookies.clear()
+    client.cookies.set("ytd_session", legacy.dumps(owner), domain="testserver.local")
+    assert client.get("/api/session").status_code == 200
+    assert len(client.cookies.get("ytd_session", domain="testserver.local")) == 64
+    assert client.get(f"/api/jobs/{job['id']}").status_code == 200
+
+
+def test_unavailable_scheduler_blocks_admission_and_session_readiness(client, monkeypatch):
+    monkeypatch.setattr(client.app.state.runner, "available", lambda: False)
+    assert not client.get("/api/session").json()["ready"]
+    response = client.post("/api/jobs", json=PAYLOAD, headers=HEADERS)
+    assert response.status_code == 503
+    assert client.get("/api/jobs").json() == []

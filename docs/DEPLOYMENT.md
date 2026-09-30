@@ -12,10 +12,11 @@ curl --fail http://127.0.0.1:8080/readyz
 ```
 
 For remote private access, keep the listener private and use an SSH tunnel or an authenticated
-private reverse proxy/VPN. There is no application login screen. Do not expose the raw port
+private reverse proxy/VPN. Optional social login is documented in [AUTHENTICATION.md](AUTHENTICATION.md).
+Do not expose the raw port
 on the internet. The bootstrap has not modified any server, DNS record, or public tunnel.
 
-## Public reverse proxy without login
+## Public reverse proxy with guest access
 
 The application can serve anonymous visitors, but public deployment is a separate operator
 change. Use a host with enough temporary disk, an explicit data-volume quota, and monitoring.
@@ -26,7 +27,8 @@ change. Use a host with enough temporary disk, an explicit data-volume quota, an
    immediate reverse proxy IP, never `*` and never arbitrary client-provided forwarded addresses.
 3. Adapt `deploy/compose.proxy.example.yaml` to the actual Docker network. It removes the host
    port mapping and serves only on the existing `proxy-net`. It enables Secure cookies and a
-   specific forwarded-header trust source. Recent Compose v2 supporting `!reset` is required.
+   specific forwarded-header trust source. It also enables `YTD_PUBLIC_MODE=true` and derives
+   the callback origin from `PUBLIC_HOST`. Recent Compose v2 supporting `!reset` is required.
 4. Configure the proxy to forward to `downloader:8000`. If using an outbound tunnel, route the
    tunnel through that proxy; do not open an additional public application port.
 5. Normalize the real client IP at the trusted edge. Verify that a visitor cannot spoof
@@ -61,6 +63,8 @@ The application has one worker per data directory. Do not add replicas or Uvicor
 - A real video and MP3 download from each enabled provider succeed from the deployment host
   and pass ffprobe. Use a source with an audio track when checking MP3.
 - Cancellation, timeout, restart, expiry, and volume limits behave correctly under load.
+- Guest/free quotas, account/session isolation, OAuth callbacks and deletion pass the real
+  provider/host checks in [AUTHENTICATION.md](AUTHENTICATION.md).
 - The raw application port is unreachable externally and file responses are never cached.
 - Monitor process readiness, disk usage, memory, job failures, and abuse. Confirm rollback.
 
@@ -80,9 +84,12 @@ docker compose up -d --wait
 
 Record the old source commit/image ID first. To roll back, check out the prior release in a
 separate clean deployment checkout and recreate using its image and Compose configuration.
-Back up the data volume before a future database-schema migration. Schema version 0.1.0 is
-created on first run and has no destructive upgrade step. Version 0.2.0 reuses that schema;
-existing YouTube jobs and signing keys remain compatible.
+Back up the data volume before upgrading. Version 0.3.0 adds account/session/flow tables,
+per-job resource snapshots and quota/idempotency columns. Existing jobs and signing keys remain
+compatible; old signed guest cookies are upgraded on their next session refresh. Old queued
+jobs fall back to the global media ceilings. Rollback to 0.2 requires restoring the pre-upgrade
+volume as well as its image: the old submission insert is incompatible with the added columns,
+and v0.2 cannot understand new account/session cookies. Do not roll back the image alone.
 
 The manual Release workflow accepts a version matching `pyproject.toml`, checks successful CI
 for that exact commit, publishes `ghcr.io/kashek420/yt-downloader:<version>`, and creates a GitHub
@@ -91,10 +98,17 @@ Image visibility is a separate GHCR package setting; verify it after the first p
 
 ## Data and troubleshooting
 
-- `/data/jobs.sqlite3`: job metadata and short-lived hashed-IP rate records.
-- `/data/session.key`: signing secret. Preserve it to retain browser access across restarts.
+- `/data/jobs.sqlite3`: jobs, accounts, hashed sessions, temporary login state and quota records.
+- `/data/session.key`: persistent HMAC/signing secret. Preserve it with the database; replacing
+  it changes pseudonymous account/IP identities and invalidates legacy-cookie migration.
 - `/data/media/<random-id>/`: temporary download and completed output.
-- `/healthz`: liveness; `/readyz`: worker and runtime availability.
+- `/healthz`: liveness; `/readyz`: worker, maintenance and runtime availability.
+
+Do not enable unredacted access logs for `/auth/*/callback`: the query contains a short-lived
+authorization code. Never log cookies, token endpoint bodies or authorization headers.
+After deletion, metadata is retained for cleanup until the file can actually be removed.
+An existing stream may finish; locked files are retried every cleanup interval. A permanently
+locked/unsafe directory needs operator inspection, without following symlinks outside the volume.
 
 `provider_error` can indicate unavailable/private media or upstream extraction changes. First
 try a known public video and check the installed yt-dlp version. Upgrade the pinned dependency

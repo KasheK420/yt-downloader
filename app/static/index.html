@@ -12,6 +12,7 @@
     <link rel="icon" href="/static/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/app.js" defer></script>
+    <script src="/static/workspace.js" defer></script>
   </head>
   <body>
     <a class="skip" href="#download-form" data-i18n="skip">Přejít ke stažení</a>
@@ -23,6 +24,14 @@
         <span>yt<span class="brand-light">downloader</span></span>
       </a>
       <div class="header-actions">
+        <button
+          id="account-open"
+          class="account-trigger"
+          type="button"
+          data-i18n="accountLimits"
+        >
+          Účet a limity
+        </button>
         <a
           class="source-link"
           href="https://github.com/KasheK420/yt-downloader"
@@ -164,6 +173,19 @@
               ><span data-i18n="submit">Připravit ke stažení</span>
             </button>
             <p class="limits" id="limits"></p>
+            <div id="budget" class="budget" hidden>
+              <div>
+                <strong id="budget-title"></strong
+                ><span id="budget-remaining"></span>
+              </div>
+              <progress
+                id="budget-progress"
+                max="100"
+                value="100"
+                aria-label="Zbývající limit"
+              ></progress>
+              <p id="budget-reset"></p>
+            </div>
           </form>
           <details class="supported-help">
             <summary data-i18n="supportedLinks">Jaké odkazy fungují?</summary>
@@ -193,7 +215,11 @@
             <h2 id="downloads-title" data-i18n="downloads">Tvoje soubory</h2>
             <span id="job-count" class="count">0</span>
           </div>
-          <p class="section-description" data-i18n="sessionNote">
+          <p
+            id="session-note"
+            class="section-description"
+            data-i18n="sessionNote"
+          >
             Viditelné jen v tomto prohlížeči.
           </p>
           <div
@@ -201,10 +227,44 @@
             class="message notice"
             role="status"
             hidden
-            data-i18n="connectionError"
           >
-            Spojení se přerušilo. Zkoušíme to znovu…
+            <span data-i18n="connectionError"
+              >Spojení se přerušilo. Zkoušíme to znovu…</span
+            >
+            <button id="reconnect" type="button" data-i18n="reconnect">
+              Obnovit spojení
+            </button>
           </div>
+          <div
+            id="job-filters"
+            class="job-filters"
+            role="group"
+            aria-label="Filtr souborů"
+          >
+            <button
+              type="button"
+              data-filter="all"
+              aria-pressed="true"
+            ></button>
+            <button
+              type="button"
+              data-filter="active"
+              aria-pressed="false"
+            ></button>
+            <button
+              type="button"
+              data-filter="complete"
+              aria-pressed="false"
+            ></button>
+          </div>
+          <p
+            id="filter-empty"
+            class="filter-empty"
+            data-i18n="filterEmpty"
+            hidden
+          >
+            V tomto pohledu nejsou žádné soubory.
+          </p>
           <div id="empty-state" class="empty-state">
             <div class="empty-icon" aria-hidden="true">
               <svg viewBox="0 0 80 64">
@@ -237,7 +297,67 @@
     </main>
     <footer class="shell footer">
       <span data-i18n="footer">Jeden odkaz. Tvůj soubor.</span
-      ><span>yt-downloader <span class="version">v0.2.0</span></span>
+      ><a href="/static/privacy.html" data-i18n="privacy">Soukromí a data</a
+      ><span>yt-downloader <span class="version">v0.3.0</span></span>
     </footer>
+    <dialog id="account-dialog" aria-labelledby="account-title">
+      <div class="dialog-heading">
+        <h2 id="account-title" data-i18n="accountLimits">Účet a limity</h2>
+        <button
+          class="dialog-close"
+          type="button"
+          data-close="account-dialog"
+          aria-label="Zavřít"
+        >
+          ×
+        </button>
+      </div>
+      <p id="account-summary"></p>
+      <div id="plan-comparison" class="plan-comparison"></div>
+      <p class="field-help" data-i18n="quotaHelp">
+        Počítá se každý přijatý pokus, i neúspěšný. Smazání úlohy limit nevrací.
+      </p>
+      <div id="login-options" class="login-options"></div>
+      <p id="login-note" class="field-help"></p>
+      <div id="account-actions" class="account-actions" hidden>
+        <button id="logout" type="button" data-i18n="logout">Odhlásit</button>
+        <button id="logout-all" type="button" data-i18n="logoutAll">
+          Odhlásit všechna zařízení
+        </button>
+        <button
+          id="delete-account"
+          class="danger-text"
+          type="button"
+          data-i18n="deleteAccount"
+        >
+          Smazat účet
+        </button>
+      </div>
+      <p id="account-error" class="message error" role="alert" hidden></p>
+      <a class="privacy-link" href="/static/privacy.html" data-i18n="privacy"
+        >Soukromí a data</a
+      >
+    </dialog>
+    <dialog
+      id="confirm-dialog"
+      aria-labelledby="confirm-title"
+      aria-describedby="confirm-copy"
+    >
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-copy"></p>
+      <div class="dialog-actions">
+        <button id="confirm-cancel" type="button" data-i18n="keep">
+          Ponechat</button
+        ><button
+          id="confirm-accept"
+          class="danger-button"
+          type="button"
+          data-i18n="remove"
+        >
+          Smazat
+        </button>
+      </div>
+      <p id="confirm-error" class="message error" role="alert" hidden></p>
+    </dialog>
   </body>
 </html>

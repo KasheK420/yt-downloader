@@ -173,309 +173,151 @@ const translations = {
   },
 };
 
-const $ = (id) => document.getElementById(id);
-let language = "cs";
-try {
-  language = localStorage.getItem("ytd-language") === "en" ? "en" : "cs";
-} catch {
-  /* Storage is optional. */
-}
-let config = null;
-let jobs = [];
-let submitting = false;
-let lastAnnouncement = "";
-let lastError = null;
-const active = new Set(["queued", "downloading", "processing"]);
-const providerNames = {
-  youtube: "YouTube",
-  facebook: "Facebook",
-  instagram: "Instagram",
-};
-const t = () => translations[language];
-
-function updateSource() {
-  let provider = null;
-  try {
-    const host = new URL($("url").value.trim()).hostname;
-    if (
-      [
-        "youtube.com",
-        "www.youtube.com",
-        "m.youtube.com",
-        "music.youtube.com",
-        "youtu.be",
-      ].includes(host)
-    )
-      provider = "youtube";
-    if (
-      [
-        "facebook.com",
-        "www.facebook.com",
-        "m.facebook.com",
-        "mbasic.facebook.com",
-        "fb.watch",
-      ].includes(host)
-    )
-      provider = "facebook";
-    if (["instagram.com", "www.instagram.com"].includes(host))
-      provider = "instagram";
-  } catch {
-    /* Keep the neutral hint while a link is incomplete. */
-  }
-  $("source-status").textContent = provider
-    ? t().sourceDetected(providerNames[provider])
-    : "";
-  document.querySelectorAll("[data-provider]").forEach((badge) => {
-    badge.classList.toggle("detected", badge.dataset.provider === provider);
-  });
-}
-
-function errorMessage(code) {
-  return t().errors[code] || t().errors.network;
-}
-function showError(code) {
-  lastError = code;
-  $("form-error").textContent =
-    code === "clipboard" ? t().clipboard : errorMessage(code);
-  $("form-error").hidden = false;
-}
-function setLanguage() {
-  document.documentElement.lang = language;
-  $("language").value = language;
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    element.textContent = t()[element.dataset.i18n];
-  });
-
-  if (config) {
-    $("limits").textContent = t().limits(
-      Math.round(config.max_duration_seconds / 60),
-      Math.round(config.max_file_bytes / 1024 ** 2),
-    );
-    $("retention").textContent = t().retention(
-      Math.round(config.retention_seconds / 60),
-    );
-  }
-  if (lastError && !$("form-error").hidden) showError(lastError);
-  updateSource();
-  setSubmit();
-  renderJobs();
-}
-function setSubmit() {
-  $("submit").disabled = submitting || !config?.ready;
-  $("submit").querySelector("span").textContent = submitting
-    ? t().submitting
-    : t().submit;
-}
-async function api(path, options = {}) {
-  const response = await fetch(path, {
-    credentials: "same-origin",
-    cache: "no-store",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Requested-With": "yt-downloader",
-      ...options.headers,
-    },
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(typeof data.detail === "string" ? data.detail : "network");
-  }
-  return response.json();
-}
-function element(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-function renderJobs() {
-  const focused = document.activeElement?.closest(".job");
-  const focusedId = focused?.dataset.id;
-  const fragment = document.createDocumentFragment();
-  for (const job of jobs) {
-    const card = element("article", "job");
-    card.dataset.id = job.id;
-    card.dataset.state = job.state;
-    const top = element("div", "job-top");
-    top.append(element("span", "job-type", job.kind.toUpperCase()));
-    const info = element("div", "job-info");
-    info.append(element("h3", "job-title", job.title || t().untitled));
-    const metadata = [
-      job.kind === "mp3" ? `${job.quality} kbps` : `${job.quality}p`,
-    ];
-    if (providerNames[job.provider])
-      metadata.unshift(providerNames[job.provider]);
-    if (job.file_bytes)
-      metadata.push(`${(job.file_bytes / 1024 ** 2).toFixed(1)} MB`);
-    if (job.state === "complete")
-      metadata.push(
-        t().expires(
-          Math.max(0, Math.ceil((job.expires_at - Date.now() / 1000) / 60)),
-        ),
-      );
-    info.append(element("p", "job-meta", metadata.join(" / ")));
-    top.append(info);
-    card.append(top);
-    if (active.has(job.state)) {
-      const progress = element("progress");
-      progress.max = 100;
-      if (job.state === "downloading") progress.value = job.progress || 0;
-      progress.setAttribute("aria-label", t()[job.state]);
-      card.append(progress);
-    }
-    if (job.error)
-      card.append(element("p", "job-error", errorMessage(job.error)));
-    const bottom = element("div", "job-bottom");
-    bottom.append(
-      element(
-        "span",
-        "job-status",
-        `${t()[job.state] || job.state}${job.state === "downloading" ? ` ${Math.floor(job.progress)} %` : ""}`,
-      ),
-    );
-    if (job.state === "complete") {
-      const link = element(
-        "a",
-        "job-action",
-        `${t().download} ${job.kind.toUpperCase()}`,
-      );
-      link.href = `/api/jobs/${encodeURIComponent(job.id)}/file`;
-      link.addEventListener("click", async (event) => {
-        event.preventDefault();
-        try {
-          if (Date.now() / 1000 >= job.expires_at)
-            throw new Error("file_expired");
-          // Check availability before starting a native browser download; do not buffer large files.
-          await api(`/api/jobs/${encodeURIComponent(job.id)}`);
-          const probe = await fetch(link.href, {
-            method: "HEAD",
-            credentials: "same-origin",
-          });
-          if (!probe.ok && probe.status !== 405)
-            throw new Error("file_expired");
-          window.location.assign(link.href);
-        } catch (error) {
-          showError(error.message);
-        }
-      });
-      bottom.append(link);
-    } else if (active.has(job.state)) {
-      const cancel = element("button", "job-action cancel", t().cancel);
-      cancel.type = "button";
-      cancel.addEventListener("click", async () => {
-        cancel.disabled = true;
-        try {
-          await api(`/api/jobs/${encodeURIComponent(job.id)}`, {
-            method: "DELETE",
-          });
-          await refresh();
-        } catch (error) {
-          showError(error.message);
-          cancel.disabled = false;
-        }
-      });
-      bottom.append(cancel);
-    }
-    card.append(bottom);
-    fragment.append(card);
-  }
-  $("jobs").replaceChildren(fragment);
-  $("empty-state").hidden = jobs.length > 0;
-  $("job-count").textContent = String(jobs.length);
-  if (focusedId)
-    Array.from($("jobs").children)
-      .find((item) => item.dataset.id === focusedId)
-      ?.querySelector(".job-action")
-      ?.focus();
-  const announcement = jobs
-    .map((job) => `${job.title || job.kind}: ${t()[job.state]}`)
-    .join(". ");
-  if (announcement !== lastAnnouncement) {
-    $("queue-announcement").textContent = announcement;
-    lastAnnouncement = announcement;
-  }
-}
-async function refresh() {
-  jobs = await api("/api/jobs");
-  $("connection-notice").hidden = true;
-  renderJobs();
-}
-async function poll() {
-  try {
-    if (!config || !config.ready) {
-      config = await api("/api/session");
-      setLanguage();
-    }
-    await refresh();
-  } catch {
-    $("connection-notice").hidden = false;
-  }
-  $("runtime-notice").hidden = !config || config.ready;
-  setTimeout(poll, jobs.some((job) => active.has(job.state)) ? 1500 : 6000);
-}
-$("language").addEventListener("change", () => {
-  language = $("language").value;
-  try {
-    localStorage.setItem("ytd-language", language);
-  } catch {
-    /* Storage is optional. */
-  }
-  setLanguage();
+Object.assign(translations.cs, {
+  accountLimits: "Účet a limity",
+  guest: "Bez účtu",
+  free: "Bezplatný účet",
+  personal: "Osobní instance",
+  accountLibrary:
+    "Tvoje soubory jsou dostupné po přihlášení i z jiného zařízení.",
+  accountWelcome: (name) => `Přihlášen jako ${name}.`,
+  accountGuest:
+    "Stahuj bez účtu. Dobrovolné přihlášení zpřístupní tvoje úlohy i na dalších zařízeních.",
+  quotaHelp:
+    "Počítá se každý přijatý pokus, i neúspěšný nebo zrušený. Opakování je nový pokus. Smazání úlohy limit nevrací.",
+  remaining: (n, total) => `${n} z ${total} zbývá`,
+  quotaWindow: (minutes) => `Za posledních ${minutes} minut.`,
+  resetAt: (time) => `Další místo v limitu: ${time}.`,
+  signIn: (name) => `Pokračovat přes ${name}`,
+  loginNote:
+    "První přihlášení vytvoří účet. Google je i pro Gmail a YouTube. Přihlašujeme tě jen do této aplikace, bez přístupu k poště nebo soukromým videím.",
+  loginDisabled:
+    "Přihlášení tu zatím není dostupné. Stahování funguje bez účtu.",
+  separateAccounts:
+    "Google a Facebook vytvářejí samostatné účty. Pro svou historii používej stejnou službu.",
+  logout: "Odhlásit",
+  logoutAll: "Odhlásit všechna zařízení",
+  deleteAccount: "Smazat účet",
+  deleteAccountCopy:
+    "Odhlásíme všechna zařízení a smažeme účet, úlohy i soubory na serveru. Krátkodobé záznamy pro limity doběhnou do své expirace. Toto nelze vrátit.",
+  remove: "Smazat",
+  keep: "Ponechat",
+  removeTitle: "Smazat tuto úlohu?",
+  removeCopy:
+    "Smažeme úlohu a její soubor na serveru. Kopie už stažená do tvého zařízení zůstane.",
+  retry: "Zkusit znovu",
+  preview: "Přehrát",
+  closePreview: "Zavřít náhled",
+  close: "Zavřít",
+  previewUnsupported:
+    "Prohlížeč toto médium nepřehraje. Soubor si můžeš stáhnout a otevřít v přehrávači.",
+  allFilter: "Vše",
+  activeFilter: "Probíhá",
+  completeFilter: "Hotové",
+  filterLabel: "Filtr souborů",
+  filterEmpty: "V tomto pohledu nejsou žádné soubory.",
+  reconnect: "Obnovit spojení",
+  privacy: "Soukromí a data",
+  signedIn: "Přihlášení proběhlo úspěšně.",
+  expiresIn: (time) => `Smazání za ${time}`,
+  wait: (seconds) => `Zkus to za ${seconds} s.`,
+  planLine: (n, hours, active) =>
+    `${n} pokusů / ${hours} h · ${active} rozpracované`,
 });
-document.querySelectorAll('[name="kind"]').forEach((input) =>
-  input.addEventListener("change", () => {
-    const isAudio = input.value === "mp3";
-    $("quality").replaceChildren(
-      ...(isAudio ? [128, 192, 320] : [360, 720, 1080]).map((value) => {
-        const option = element(
-          "option",
-          "",
-          `${value}${isAudio ? " kbps" : "p"}`,
-        );
-        option.value = value;
-        option.selected = value === (isAudio ? 192 : 720);
-        return option;
-      }),
-    );
-  }),
-);
-$("paste").addEventListener("click", async () => {
-  try {
-    $("url").value = (await navigator.clipboard.readText()).trim();
-    updateSource();
-    $("url").focus();
-  } catch {
-    showError("clipboard");
-    $("url").focus();
-  }
+Object.assign(translations.en, {
+  accountLimits: "Account & limits",
+  guest: "Guest",
+  free: "Free account",
+  personal: "Personal instance",
+  accountLibrary: "Sign in on another device to access your files.",
+  accountWelcome: (name) => `Signed in as ${name}.`,
+  accountGuest:
+    "Download as a guest. Optional sign-in gives you access to your jobs on other devices.",
+  quotaHelp:
+    "Every accepted attempt counts, including failures and cancellations. Retrying is a new attempt. Deleting a job does not refund quota.",
+  remaining: (n, total) => `${n} of ${total} left`,
+  quotaWindow: (minutes) => `Over the last ${minutes} minutes.`,
+  resetAt: (time) => `Next quota slot: ${time}.`,
+  signIn: (name) => `Continue with ${name}`,
+  loginNote:
+    "Your first sign-in creates an account. Google also covers Gmail and YouTube. Sign-in is for this app only, without access to email or private videos.",
+  loginDisabled:
+    "Sign-in is not available here yet. You can download as a guest.",
+  separateAccounts:
+    "Google and Facebook create separate accounts. Use the same provider for your history.",
+  logout: "Sign out",
+  logoutAll: "Sign out all devices",
+  deleteAccount: "Delete account",
+  deleteAccountCopy:
+    "Sign out all devices and delete your account, jobs and server files. Short-lived quota records remain until they expire. This cannot be undone.",
+  remove: "Delete",
+  keep: "Keep",
+  removeTitle: "Delete this job?",
+  removeCopy:
+    "Delete the job and its server file. A copy already downloaded to your device will stay there.",
+  retry: "Retry",
+  preview: "Play",
+  closePreview: "Close preview",
+  close: "Close",
+  previewUnsupported:
+    "This browser cannot play this media. Download it and open it in a media player.",
+  allFilter: "All",
+  activeFilter: "Active",
+  completeFilter: "Ready",
+  filterLabel: "File filter",
+  filterEmpty: "There are no files in this view.",
+  reconnect: "Reconnect",
+  privacy: "Privacy & data",
+  signedIn: "You are now signed in.",
+  expiresIn: (time) => `Deletes in ${time}`,
+  wait: (seconds) => `Try again in ${seconds} s.`,
+  planLine: (n, hours, active) =>
+    `${n} attempts / ${hours} h · ${active} active`,
 });
-$("url").addEventListener("input", updateSource);
-$("download-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (submitting) return;
-  submitting = true;
-  $("form-error").hidden = true;
-  setSubmit();
-  try {
-    const payload = {
-      url: $("url").value.trim(),
-      kind: document.querySelector('[name="kind"]:checked').value,
-      quality: Number($("quality").value),
-    };
-    const job = await api("/api/jobs", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    jobs = [job, ...jobs.filter((item) => item.id !== job.id)];
-    renderJobs();
-    await refresh();
-  } catch (error) {
-    showError(error.message);
-  } finally {
-    submitting = false;
-    setSubmit();
-  }
+Object.assign(translations.cs.errors, {
+  already_signed_in: "Už jsi přihlášený. Obnov stránku pro aktuální stav účtu.",
+  account_required: "Tato akce vyžaduje přihlášený účet.",
+  file_not_ready: "Soubor se ještě připravuje. Počkej na dokončení.",
+  queue_timeout:
+    "Úloha čekala příliš dlouho ve frontě. Zkus ji spustit později.",
+  quota_exhausted:
+    "Limit stahování je vyčerpaný. Čas dalšího pokusu najdeš u svého limitu.",
+  ip_daily_limit: "Tato síť dosáhla denního limitu. Zkus to později.",
+  quality_limit:
+    "Tato kvalita přesahuje limit tvého účtu. Vyber nižší kvalitu.",
+  login_required: "Tato instance vyžaduje přihlášení před stahováním.",
+  login_unavailable: "Přihlášení teď není dostupné. Zkus to později.",
+  login_failed: "Přihlášení se nepodařilo ověřit. Spusť ho znovu.",
+  login_expired:
+    "Přihlašovací odkaz vypršel nebo už byl použitý. Spusť přihlášení znovu.",
+  login_cancelled: "Přihlášení bylo zrušeno. Můžeš pokračovat jako host.",
+  login_origin_mismatch: "Přihlášení otevři na hlavní adrese této aplikace.",
+  auth_rate_limit: "Příliš mnoho pokusů o přihlášení. Chvíli počkej.",
+  retry_unavailable: "Zopakovat lze jen neúspěšné nebo zrušené úlohy.",
+  request_expired: "Původní úloha už vypršela. Odešli nový požadavek.",
+  idempotency_conflict:
+    "Požadavek se změnil. Zkontroluj odkaz a odešli ho znovu.",
 });
-setLanguage();
-poll();
+Object.assign(translations.en.errors, {
+  already_signed_in:
+    "You are already signed in. Refresh the page for the current account state.",
+  account_required: "This action requires a signed-in account.",
+  file_not_ready: "This file is still being prepared. Wait for completion.",
+  queue_timeout: "This job waited too long in the queue. Please retry later.",
+  quota_exhausted:
+    "Your download allowance is used up. Check your budget for the next available slot.",
+  ip_daily_limit: "This network has reached its daily limit. Please try later.",
+  quality_limit:
+    "This quality exceeds your account limit. Choose a lower quality.",
+  login_required: "This instance requires sign-in before downloading.",
+  login_unavailable: "Sign-in is unavailable right now. Please try later.",
+  login_failed: "Sign-in could not be verified. Please start again.",
+  login_expired:
+    "This sign-in link expired or was already used. Please start sign-in again.",
+  login_cancelled: "Sign-in was cancelled. You can continue as a guest.",
+  login_origin_mismatch: "Open sign-in on this app’s configured main address.",
+  auth_rate_limit: "Too many sign-in attempts. Please wait a while.",
+  retry_unavailable: "Only failed or cancelled jobs can be retried.",
+  request_expired: "The original job expired. Submit a new request.",
+  idempotency_conflict: "The request changed. Check the link and submit again.",
+});

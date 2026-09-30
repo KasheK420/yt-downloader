@@ -57,5 +57,31 @@ def test_interrupted_jobs_fail_on_recovery_and_terminal_jobs_expire(settings: Se
     recovered = store.get(job["id"], "alice")
     assert recovered["state"] == "failed"
     assert recovered["error"] == "interrupted"
-    store.expire(now=recovered["expires_at"] + 1)
+    store.purge(job["id"], now=recovered["expires_at"] + 1)
     assert store.get(job["id"], "alice") is None
+
+
+def test_old_waiting_jobs_release_capacity_but_running_jobs_keep_their_deadline(settings):
+    import time
+
+    store = Store(settings)
+    running = store.create("alice", "ip", URL, "mp4", 720)
+    store.claim()
+    queued = store.create("alice", "ip", URL, "mp4", 720)
+    with store._db() as db:
+        db.execute(
+            "UPDATE jobs SET created_at = ?", (time.time() - settings.max_queue_wait_seconds - 1,)
+        )
+    store.expire_queue()
+    assert store.get(queued["id"], "alice")["error"] == "queue_timeout"
+    assert store.get(running["id"], "alice")["state"] == "downloading"
+
+
+def test_removing_history_keeps_idempotency_tombstone(settings):
+    store = Store(settings)
+    job = store.create("alice", "ip", URL, "mp4", 720, request_key="unique")
+    store.update(job["id"], state="failed")
+    store.remove(job["id"])
+    store.purge(job["id"])
+    with pytest.raises(ValueError, match="request_expired"):
+        store.create("alice", "ip", URL, "mp4", 720, request_key="unique")
