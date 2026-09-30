@@ -171,6 +171,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return hmac.new(secret.encode(), address.encode(), hashlib.sha256).hexdigest()
 
     def cookie(response: Response, token: str) -> None:
+        if not re.fullmatch(r"[a-f0-9]{64}", token):
+            raise ValueError("Invalid session token")
         response.set_cookie(
             COOKIE,
             token,

@@ -232,3 +232,14 @@ def test_unavailable_scheduler_blocks_admission_and_session_readiness(client, mo
     response = client.post("/api/jobs", json=PAYLOAD, headers=HEADERS)
     assert response.status_code == 503
     assert client.get("/api/jobs").json() == []
+
+
+def test_malformed_session_cookie_is_never_reflected(client):
+    client.cookies.clear()
+    malformed = "x" * 64
+    client.cookies.set("ytd_session", malformed, domain="testserver.local")
+    response = client.get("/api/session")
+    assert response.status_code == 200
+    returned = client.cookies.get("ytd_session", domain="testserver.local")
+    assert len(returned) == 64 and set(returned) <= set("0123456789abcdef")
+    assert malformed not in response.headers["set-cookie"]

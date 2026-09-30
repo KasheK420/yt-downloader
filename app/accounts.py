@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import re
 import secrets
 import time
 from typing import Any
@@ -46,7 +47,7 @@ class Accounts:
             """)
 
     def session(self, token: str) -> dict[str, Any] | None:
-        if len(token) != 64:
+        if not re.fullmatch(r"[a-f0-9]{64}", token):
             return None
         with self.store._db() as db:
             row = db.execute(
