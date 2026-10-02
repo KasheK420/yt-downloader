@@ -5,10 +5,12 @@ creates a free account. Gmail and YouTube are Google identities, not additional 
 providers. Sign-in grants access to this application's library; it does not authorize
 downloading private media, reading Gmail, or accessing a YouTube channel.
 
-The integration is implemented and tested with isolated protocol fixtures. **Real Google
-and Facebook acceptance requires operator-owned OAuth applications and a callback origin.**
-No production OAuth credentials, provider-console configuration, or live user login was
-created or verified during this change. Unconfigured providers are hidden in the UI.
+Both integrations have isolated protocol tests. On 2026-10-02, the hosted instance enabled
+Google sign-in and verified a real account, logout and repeat login. Its Google audience
+is External / In production. Facebook remains unconfigured. See
+[hosted acceptance](PRODUCTION.md) for the exact scope and remaining checks.
+Other installations need their own operator-owned OAuth applications and callback origin;
+unconfigured providers are hidden in the UI.
 
 ## Enable a provider
 

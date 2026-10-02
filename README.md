@@ -9,8 +9,8 @@ A self-hosted web app that turns a **YouTube, Facebook, or Instagram** link into
 Paste a link, choose the format and quality, preview it, and download the result.
 Guest access works out of the box; optional Google/Facebook sign-in adds an account library.
 
-Hosted guest instance: **https://ytdown.majorluk.cz**. Facebook MP4/MP3 and Instagram MP4
-have passed hosted checks. The tested YouTube source currently requires bot verification
+Hosted instance: **https://ytdown.majorluk.cz**, with guest access and optional Google sign-in.
+Facebook MP4/MP3 and Instagram MP4 have passed hosted checks. The tested YouTube source currently requires bot verification
 from the VPS; hosted YouTube availability is not established. See [hosted status and operations](docs/PRODUCTION.md).
 
 ![Desktop interface with synthetic example jobs](docs/images/desktop.png)
