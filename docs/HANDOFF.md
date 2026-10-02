@@ -13,7 +13,11 @@
 - Live YouTube/Facebook MP4 and MP3 and Instagram MP4 passed ffprobe checks. Tested Instagram
   sources supplied no audio; live Instagram MP3 with audio remains unverified.
 - [VERIFICATION.md](VERIFICATION.md) records test scope and unavailable checks.
-- Production infrastructure has not been changed. Public launch is tracked separately.
+- Guest hosting is deployed at https://ytdown.majorluk.cz on Contabo. See [PRODUCTION.md](PRODUCTION.md).
+- Hosted Facebook MP4/MP3 and Instagram MP4 passed. YouTube requests from the VPS require
+  bot verification; provider acceptance remains incomplete. Optional OAuth is still disabled.
+- The image is built locally on the VPS; registry publishing is not configured. Uptime Kuma
+  was omitted at the owner's request; systemd health checks and daily metadata backups are active.
 
 ## Continue
 

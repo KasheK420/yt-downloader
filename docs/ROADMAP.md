@@ -21,6 +21,11 @@ real provider-console activation and hosted sign-in remain acceptance work.
 
 ## Public launch milestone
 
+Hosting is now deployed at https://ytdown.majorluk.cz; see [PRODUCTION.md](PRODUCTION.md).
+HTTPS/proxy boundaries and guest budgets passed hosted checks. Facebook MP4/MP3 and
+Instagram MP4 passed; the tested YouTube source requires bot verification from the VPS.
+Full provider/load acceptance and optional OAuth activation remain open.
+
 The future public service supports guests with optional free accounts. Before launch:
 
 1. Select hostname/host and verify HTTPS, trusted client IP forwarding, and edge abuse limits.
@@ -31,8 +36,8 @@ The future public service supports guests with optional free accounts. Before la
    operator-owned Google/Meta applications, set exact callback/consent/privacy details,
    and prove login/logout/deletion with real accounts if optional sign-in is enabled.
 
-These are deployment acceptance tasks, not missing basic downloader functionality. They are
-tracked as GitHub issues under the Public launch milestone; no production deployment is implied.
+The remaining acceptance tasks are tracked as GitHub issues under the Public launch milestone.
+A live readiness endpoint does not establish provider availability or sustained load capacity.
 
 ## Candidate improvements
 
