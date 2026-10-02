@@ -1,5 +1,15 @@
 # Verification evidence
 
+## Hosted deployment — 2026-10-02
+
+Application commit `ee44569230d24da24fc5c84f1058a4d2a93deecf` is deployed at
+https://ytdown.majorluk.cz. [PRODUCTION.md](PRODUCTION.md) records the exact resources,
+successful public Facebook MP4/MP3 and Instagram MP4 checks, decoded output sizes,
+ownership and proxy/limit checks, restart persistence, and verified metadata backup.
+The tested YouTube source is blocked by a bot-verification requirement from the VPS.
+Live social sign-in and sustained load acceptance remain unverified. Earlier sections
+below describe their original local/CI scope and are not retroactive hosted evidence.
+
 ## v0.3.1 MP4 playback compatibility - 2026-09-30
 
 Local Windows checks: **201 backend tests passed**, one Windows symlink-privilege skip;

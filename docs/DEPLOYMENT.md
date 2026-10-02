@@ -1,5 +1,9 @@
 # Deployment and operations
 
+For the existing Contabo deployment at `ytdown.majorluk.cz`, use the current
+[hosted status and operator handoff](PRODUCTION.md). The examples below are generic
+installation guidance; they do not replace that host's isolated network and systemd setup.
+
 ## Private installation
 
 Use the default `compose.yaml`. It exposes only `127.0.0.1:8080`, runs as UID/GID 10001,
@@ -14,7 +18,7 @@ curl --fail http://127.0.0.1:8080/readyz
 For remote private access, keep the listener private and use an SSH tunnel or an authenticated
 private reverse proxy/VPN. Optional social login is documented in [AUTHENTICATION.md](AUTHENTICATION.md).
 Do not expose the raw port
-on the internet. The bootstrap has not modified any server, DNS record, or public tunnel.
+on the internet. Publishing a new instance requires an explicit host-specific deployment.
 
 ## Public reverse proxy with guest access
 

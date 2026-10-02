@@ -9,6 +9,10 @@ A self-hosted web app that turns a **YouTube, Facebook, or Instagram** link into
 Paste a link, choose the format and quality, preview it, and download the result.
 Guest access works out of the box; optional Google/Facebook sign-in adds an account library.
 
+Hosted guest instance: **https://ytdown.majorluk.cz**. Facebook MP4/MP3 and Instagram MP4
+have passed hosted checks. The tested YouTube source currently requires bot verification
+from the VPS; hosted YouTube availability is not established. See [hosted status and operations](docs/PRODUCTION.md).
+
 ![Desktop interface with synthetic example jobs](docs/images/desktop.png)
 
 ## Features
@@ -112,8 +116,9 @@ never contacts those providers. See the dated
 This release is intended for a private installation first. Public operation without login
 is supported by the application model but requires the deployment steps in
 [DEPLOYMENT.md](docs/DEPLOYMENT.md), including HTTPS, edge limits, and trusted proxy configuration.
-There is no live public service deployed by this repository bootstrap. The public proxy
-example enables guest/free budgets; see [limits and failure cases](docs/LIMITS.md).
+The hosted instance and its current provider limitations are recorded in
+[PRODUCTION.md](docs/PRODUCTION.md). The public proxy example enables guest/free budgets;
+see [limits and failure cases](docs/LIMITS.md).
 Google/Facebook login requires your own OAuth application credentials and exact callback
 origin. It is hidden until configured. Follow [authentication setup](docs/AUTHENTICATION.md).
 
@@ -133,6 +138,7 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Limits and edge cases](docs/LIMITS.md) | Guest/free policies, quotas and failure behavior |
 | [Sources](docs/SOURCES.md)             | Supported links, provider behavior, and limits         |
 | [Deployment](docs/DEPLOYMENT.md)       | Private setup, public launch, proxying, and operations |
+| [Hosted instance](docs/PRODUCTION.md)  | Current host, verified behavior, limits and operations |
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |
 | [Roadmap](docs/ROADMAP.md)             | Public-launch acceptance and future work               |
 | [Handoff](docs/HANDOFF.md)             | Current state and how to continue                      |
