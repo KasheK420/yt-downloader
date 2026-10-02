@@ -12,6 +12,14 @@ created or verified during this change. Unconfigured providers are hidden in the
 
 ## Enable a provider
 
+The production Google project is `ytdown-majorluk-prod`, owned by the operator.
+Visitors use their own Google accounts; project ownership does not sign visitors
+in as the operator. Its web client must allow only
+`https://ytdown.majorluk.cz/auth/google/callback`. Google branding uses the public
+homepage, `https://ytdown.majorluk.cz/static/privacy.html`, and the authorized
+domain `majorluk.cz`. See [PRODUCTION.md](PRODUCTION.md) for activation and live
+acceptance status; creating the provider project alone does not enable login.
+
 1. Choose the exact externally reachable origin, such as `https://downloads.example.com`.
    Add its hostname to `YTD_ALLOWED_HOSTS`, set `YTD_SECURE_COOKIES=true`, and configure
    trusted reverse-proxy headers as described in [deployment](DEPLOYMENT.md).

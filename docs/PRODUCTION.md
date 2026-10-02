@@ -16,6 +16,13 @@ No browser cookies, residential proxy, or account credentials were added to the 
 
 Guest access is enabled. Google/Facebook sign-in remains unconfigured and its buttons
 are hidden. OAuth activation is tracked in [issue #15](https://github.com/KasheK420/yt-downloader/issues/15).
+The operator has created the dedicated Google project `ytdown-majorluk-prod` and
+a web OAuth client with the exact production callback. Provider-side setup alone
+does not prove hosted login; runtime credentials and live acceptance remain pending.
+
+The bounded media benchmark and public-growth constraints are recorded in
+[CAPACITY.md](CAPACITY.md). Its synthetic timings must not be presented as a
+multi-user or live-provider load test.
 
 ## Runtime and resource limits
 

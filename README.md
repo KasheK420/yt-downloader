@@ -139,6 +139,7 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Sources](docs/SOURCES.md)             | Supported links, provider behavior, and limits         |
 | [Deployment](docs/DEPLOYMENT.md)       | Private setup, public launch, proxying, and operations |
 | [Hosted instance](docs/PRODUCTION.md)  | Current host, verified behavior, limits and operations |
+| [Capacity and product decisions](docs/CAPACITY.md) | Measured media costs, scaling limits, credits and extension options |
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |
 | [Roadmap](docs/ROADMAP.md)             | Public-launch acceptance and future work               |
 | [Handoff](docs/HANDOFF.md)             | Current state and how to continue                      |
