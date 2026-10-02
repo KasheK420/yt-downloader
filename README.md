@@ -9,8 +9,8 @@ A self-hosted web app that turns a **YouTube, Facebook, or Instagram** link into
 Paste a link, choose the format and quality, preview it, and download the result.
 Guest access works out of the box; optional Google/Facebook sign-in adds an account library.
 
-Hosted guest instance: **https://ytdown.majorluk.cz**. Facebook MP4/MP3 and Instagram MP4
-have passed hosted checks. The tested YouTube source currently requires bot verification
+Hosted instance: **https://ytdown.majorluk.cz**, with guest access and optional Google sign-in.
+Facebook MP4/MP3 and Instagram MP4 have passed hosted checks. The tested YouTube source currently requires bot verification
 from the VPS; hosted YouTube availability is not established. See [hosted status and operations](docs/PRODUCTION.md).
 
 ![Desktop interface with synthetic example jobs](docs/images/desktop.png)
@@ -139,6 +139,7 @@ CI has passed for that commit. It never deploys a server automatically.
 | [Sources](docs/SOURCES.md)             | Supported links, provider behavior, and limits         |
 | [Deployment](docs/DEPLOYMENT.md)       | Private setup, public launch, proxying, and operations |
 | [Hosted instance](docs/PRODUCTION.md)  | Current host, verified behavior, limits and operations |
+| [Capacity and product decisions](docs/CAPACITY.md) | Measured media costs, scaling limits, credits and extension options |
 | [Verification](docs/VERIFICATION.md)   | Local, provider, browser, and hosted evidence          |
 | [Roadmap](docs/ROADMAP.md)             | Public-launch acceptance and future work               |
 | [Handoff](docs/HANDOFF.md)             | Current state and how to continue                      |

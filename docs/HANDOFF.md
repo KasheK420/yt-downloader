@@ -8,16 +8,19 @@
 - Supports YouTube, Facebook, and Instagram single-video links; see [SOURCES.md](SOURCES.md).
 - Scope: private use first; later public guest access plus optional Google/Facebook free accounts.
 - Retries, deletion, owned media previews, independent cleanup, quotas and session recovery are implemented.
-- OAuth protocol fixtures pass; live Google/Meta console setup and real login are still pending.
+- OAuth protocol fixtures pass. Hosted Google sign-in, logout and repeat login passed with
+  one real account; the Google application is External / In production. Meta setup is pending.
   See [AUTHENTICATION.md](AUTHENTICATION.md) and [LIMITS.md](LIMITS.md).
 - Live YouTube/Facebook MP4 and MP3 and Instagram MP4 passed ffprobe checks. Tested Instagram
   sources supplied no audio; live Instagram MP3 with audio remains unverified.
 - [VERIFICATION.md](VERIFICATION.md) records test scope and unavailable checks.
 - Guest hosting is deployed at https://ytdown.majorluk.cz on Contabo. See [PRODUCTION.md](PRODUCTION.md).
 - Hosted Facebook MP4/MP3 and Instagram MP4 passed. YouTube requests from the VPS require
-  bot verification; provider acceptance remains incomplete. Optional OAuth is still disabled.
+  bot verification; provider acceptance remains incomplete. Google login does not resolve it.
 - The image is built locally on the VPS; registry publishing is not configured. Uptime Kuma
   was omitted at the owner's request; systemd health checks and daily metadata backups are active.
+- [CAPACITY.md](CAPACITY.md) records a bounded synthetic media benchmark and the constraints
+  for public growth, paid credits and a browser companion. No payment or extension was built.
 
 ## Continue
 

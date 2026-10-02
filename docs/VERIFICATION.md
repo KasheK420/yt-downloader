@@ -1,13 +1,41 @@
 # Verification evidence
 
+## Google activation and capacity baseline — 2026-10-02
+
+Application commit `7c90d17c3086fd21dfe13ce2705d81bf1b6b2b9c` passed
+[CI](https://github.com/KasheK420/yt-downloader/actions/runs/37042288416) and
+[CodeQL](https://github.com/KasheK420/yt-downloader/actions/runs/37042288687), then
+was built and deployed on Contabo. Local checks passed: 201 backend tests, one
+Windows symlink skip, 36 browser tests, Ruff lint/format, mypy and Prettier.
+
+Google's dedicated web client has an External / In production audience and only
+identity/profile scopes. A real Google account completed consent, login, logout and
+repeat login through the public HTTPS application. The account library and consumed
+allowance persisted, and the guest view returned on logout. Public privacy/contact
+details rendered correctly. The OAuth environment is root-only and a verified metadata
+backup includes it with the matching session key. No tokens, credentials, personal
+history or provider-console screenshots are committed.
+
+This is one-account hosted acceptance, not a second-account/device test or proof of
+every OAuth failure case. Live consent rejection, callback replay/expiry, all-device
+logout and account deletion were not run. Offline tests cover those behaviors.
+Facebook setup remains pending. Public Google publication was confirmed in the console;
+custom branding verification was not performed.
+
+[CAPACITY.md](CAPACITY.md) records a separate network-disabled, one-CPU synthetic
+benchmark: a 30-second clip took 32.758 s to normalize to 720p with full decode,
+5.017 s to remux and decode compatible MP4, and 0.669 s for MP3 conversion/probing.
+These are processing measurements, not provider timings or multi-user load acceptance.
+YouTube's hosted bot challenge remains unresolved.
+
 ## Hosted deployment — 2026-10-02
 
-Application commit `ee44569230d24da24fc5c84f1058a4d2a93deecf` is deployed at
+The initial deployment used application commit `ee44569230d24da24fc5c84f1058a4d2a93deecf` at
 https://ytdown.majorluk.cz. [PRODUCTION.md](PRODUCTION.md) records the exact resources,
 successful public Facebook MP4/MP3 and Instagram MP4 checks, decoded output sizes,
 ownership and proxy/limit checks, restart persistence, and verified metadata backup.
 The tested YouTube source is blocked by a bot-verification requirement from the VPS.
-Live social sign-in and sustained load acceptance remain unverified. Earlier sections
+At that deployment, live social sign-in and sustained load acceptance were unverified. Earlier sections
 below describe their original local/CI scope and are not retroactive hosted evidence.
 
 ## v0.3.1 MP4 playback compatibility - 2026-09-30
