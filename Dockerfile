@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
 FROM node:24-bookworm-slim AS node
 FROM ghcr.io/astral-sh/uv:0.12.21 AS uv
-FROM python:3.13-slim-bookworm AS build
+FROM python:3.14-slim-bookworm AS build
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 RUN uv sync --frozen --no-dev --no-editable
 
-FROM python:3.13-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 LABEL org.opencontainers.image.source="https://github.com/KasheK420/yt-downloader" \
       org.opencontainers.image.title="yt-downloader" \
       org.opencontainers.image.licenses="MIT"
